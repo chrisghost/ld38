@@ -4,3 +4,5 @@ dist
 dist.zip
 .idea
 .publish
+*swp
+*un~

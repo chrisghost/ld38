@@ -3,7 +3,7 @@ import PlayState from './states/play.jsx';
 
 class Game extends Phaser.Game {
   constructor() {
-    super(480, 320, Phaser.AUTO, 'game');
+    super(1024, 768, Phaser.AUTO, 'game');
     window.game = this;
 
     this.state.add('boot', BootState);
