@@ -1,6 +1,8 @@
 import {Grid, CellTypes} from '../objects/grid.jsx';
 import Car from '../objects/car.jsx';
-import {CELL_SIZE} from '../constants.jsx';
+import Road from '../objects/road.jsx';
+import ToolBelt from '../objects/toolbelt.jsx';
+import {CELL_SIZE, Direction} from '../constants.jsx';
 
 class PlayState extends Phaser.State {
   preload() {
@@ -8,6 +10,7 @@ class PlayState extends Phaser.State {
     this.game.load.image('watercell', 'assets/sprites/watercell.png');
     this.game.load.image('cursorvisor', 'assets/sprites/cursorvisor.png');
     this.game.load.image('car', 'assets/sprites/car.png');
+    this.game.load.image('road', 'assets/sprites/roadN.png');
     this.game.load.image('destination', 'assets/sprites/destination.png');
     this.cursors = this.game.input.keyboard.createCursorKeys();
   }
@@ -37,18 +40,14 @@ class PlayState extends Phaser.State {
   }
 
   create() {
-    this.grid = new Grid(6, 6);
+    this.grid = new Grid(20, 20);
     //this.grid.printGrid()
 
     this.grid.forEach(function(cell) {
 
       var p = this.cellToWorld(cell.x, cell.y)
 
-      var c = this.game.add.sprite(
-        p.x,
-        p.y,
-        this.cellSpriteName(cell.kind)
-      )
+      var c = this.game.add.sprite( p.x, p.y, this.cellSpriteName(cell.kind))
       //console.log(c)
     }.bind(this))
 
@@ -61,22 +60,39 @@ class PlayState extends Phaser.State {
 
     this.game.input.mouse.capture = true;
 
-    this.game.input.onDown.add(function(ev) {
-      var p = this.cursorToGrid(this.game.input.x, this.game.input.y)
-      var wp = this.cellToWorld(p.x, p.y)
+    this.toolbelt = new ToolBelt(this)
 
-      this.createCar(wp.x, wp.y)
-
-    }, this)
+    this.game.input.onDown.add(this.toolbelt.onMouseDown, this.toolbelt)
 
     this.cars = []
+
+  }
+
+  createRoad(x, y, dir) {
+    console.log("create Road")
+    var wp = this.cellToWorld(x, y)
+
+    var s = this.game.add.sprite(wp.x + CELL_SIZE / 2, wp.y + CELL_SIZE / 2, 'road')
+    s.anchor.setTo(0.5, 0.5)
+
+    switch(dir) {
+      case Direction.E : s.angle = 90
+            break;
+      case Direction.S : s.angle = 180
+            break;
+      case Direction.W : s.angle = 270
+            break;
+      default : s.angle = 0
+    }
+
+    this.grid.addRoad(x, y, dir)
   }
 
   createCar(x, y) {
     var car = new Car(x, y, 'car', this.game)
     this.cars.push(car)
     var from = car.gridCoord()
-    var to = this.grid.getRandCell()
+    var to = {x: 0, y: 0} //this.grid.getRandCell()
     //console.log(to)
 
     this.grid.path(from, to, function(p) {
@@ -100,7 +116,8 @@ class PlayState extends Phaser.State {
   update() {
     this.moveCamera()
     //this.game.world.scale.set(this.worldScale)
-    this.cars.map(c => c.update())
+    this.cars.map(c => c.update(this.cars))
+
   }
 
   render() {
@@ -115,6 +132,9 @@ class PlayState extends Phaser.State {
       this.cursorVisor.y = cPos.y
 
       this.game.debug.text( "Cursor hovering : " + cc.x+", "+cc.y + " Kind : "+cc.kind , 100, 380 );
+
+      this.toolbelt.render(cPos)
+
     }
 
   }
@@ -133,7 +153,7 @@ class PlayState extends Phaser.State {
     //if (game.input.keyboard.isDown(Phaser.Keyboard.Q)) this.worldScale += 0.05
     //else if (game.input.keyboard.isDown(Phaser.Keyboard.A)) this.worldScale -= 0.05
 
-    Phaser.Math.clamp(this.worldScale, 0.25, 2)
+    //Phaser.Math.clamp(this.worldScale, 0.25, 2)
   }
 }
 

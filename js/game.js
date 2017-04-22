@@ -147,11 +147,19 @@
 
 	var _grid = __webpack_require__(3);
 
-	var _car = __webpack_require__(4);
+	var _car = __webpack_require__(5);
 
 	var _car2 = _interopRequireDefault(_car);
 
-	var _constants = __webpack_require__(5);
+	var _road = __webpack_require__(6);
+
+	var _road2 = _interopRequireDefault(_road);
+
+	var _toolbelt = __webpack_require__(7);
+
+	var _toolbelt2 = _interopRequireDefault(_toolbelt);
+
+	var _constants = __webpack_require__(4);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -177,6 +185,7 @@
 	      this.game.load.image('watercell', 'assets/sprites/watercell.png');
 	      this.game.load.image('cursorvisor', 'assets/sprites/cursorvisor.png');
 	      this.game.load.image('car', 'assets/sprites/car.png');
+	      this.game.load.image('road', 'assets/sprites/roadN.png');
 	      this.game.load.image('destination', 'assets/sprites/destination.png');
 	      this.cursors = this.game.input.keyboard.createCursorKeys();
 	    }
@@ -213,7 +222,7 @@
 	  }, {
 	    key: 'create',
 	    value: function create() {
-	      this.grid = new _grid.Grid(6, 6);
+	      this.grid = new _grid.Grid(20, 20);
 	      //this.grid.printGrid()
 
 	      this.grid.forEach(function (cell) {
@@ -233,14 +242,36 @@
 
 	      this.game.input.mouse.capture = true;
 
-	      this.game.input.onDown.add(function (ev) {
-	        var p = this.cursorToGrid(this.game.input.x, this.game.input.y);
-	        var wp = this.cellToWorld(p.x, p.y);
+	      this.toolbelt = new _toolbelt2.default(this);
 
-	        this.createCar(wp.x, wp.y);
-	      }, this);
+	      this.game.input.onDown.add(this.toolbelt.onMouseDown, this.toolbelt);
 
 	      this.cars = [];
+	    }
+	  }, {
+	    key: 'createRoad',
+	    value: function createRoad(x, y, dir) {
+	      console.log("create Road");
+	      var wp = this.cellToWorld(x, y);
+
+	      var s = this.game.add.sprite(wp.x + _constants.CELL_SIZE / 2, wp.y + _constants.CELL_SIZE / 2, 'road');
+	      s.anchor.setTo(0.5, 0.5);
+
+	      switch (dir) {
+	        case _constants.Direction.E:
+	          s.angle = 90;
+	          break;
+	        case _constants.Direction.S:
+	          s.angle = 180;
+	          break;
+	        case _constants.Direction.W:
+	          s.angle = 270;
+	          break;
+	        default:
+	          s.angle = 0;
+	      }
+
+	      this.grid.addRoad(x, y, dir);
 	    }
 	  }, {
 	    key: 'createCar',
@@ -248,7 +279,7 @@
 	      var car = new _car2.default(x, y, 'car', this.game);
 	      this.cars.push(car);
 	      var from = car.gridCoord();
-	      var to = this.grid.getRandCell();
+	      var to = { x: 0, y: 0 }; //this.grid.getRandCell()
 	      //console.log(to)
 
 	      this.grid.path(from, to, function (p) {
@@ -273,10 +304,12 @@
 	  }, {
 	    key: 'update',
 	    value: function update() {
+	      var _this2 = this;
+
 	      this.moveCamera();
 	      //this.game.world.scale.set(this.worldScale)
 	      this.cars.map(function (c) {
-	        return c.update();
+	        return c.update(_this2.cars);
 	      });
 	    }
 	  }, {
@@ -293,6 +326,8 @@
 	        this.cursorVisor.y = cPos.y;
 
 	        this.game.debug.text("Cursor hovering : " + cc.x + ", " + cc.y + " Kind : " + cc.kind, 100, 380);
+
+	        this.toolbelt.render(cPos);
 	      }
 	    }
 	  }, {
@@ -305,7 +340,7 @@
 	      //if (game.input.keyboard.isDown(Phaser.Keyboard.Q)) this.worldScale += 0.05
 	      //else if (game.input.keyboard.isDown(Phaser.Keyboard.A)) this.worldScale -= 0.05
 
-	      Phaser.Math.clamp(this.worldScale, 0.25, 2);
+	      //Phaser.Math.clamp(this.worldScale, 0.25, 2)
 	    }
 	  }]);
 
@@ -316,21 +351,25 @@
 
 /***/ }),
 /* 3 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	exports.CellTypes = exports.Grid = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _constants = __webpack_require__(4);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var CellTypes = {
 	  KIND_EARTH: 0,
-	  KIND_WATER: 1
+	  KIND_WATER: 1,
+	  KIND_ROAD: 2
 	};
 
 	var Cell = function () {
@@ -361,24 +400,30 @@
 
 	    this.g = [];
 
-	    for (var x = 0; x < w; x++) {
+	    for (var y = 0; y < w; y++) {
 	      this.g.push([]);
-	      for (var y = 0; y < h; y++) {
-	        this.g[x].push(new Cell(x, y, Math.random() > 0.0 ? CellTypes.KIND_EARTH : CellTypes.KIND_WATER));
+	      for (var x = 0; x < h; x++) {
+	        this.g[y].push(new Cell(x, y, Math.random() > 0.0 ? CellTypes.KIND_EARTH : CellTypes.KIND_WATER));
 	      }
 	    }
 
 	    this.star = new EasyStar.js();
 
-	    this.star.setGrid(this.g.map(function (c) {
-	      return c.map(function (cell) {
-	        return cell.kind;
-	      });
-	    }));
+	    this.initGrid();
+
 	    this.star.setAcceptableTiles(this.walkables());
 	  }
 
 	  _createClass(Grid, [{
+	    key: "initGrid",
+	    value: function initGrid() {
+	      this.star.setGrid(this.g.map(function (c) {
+	        return c.map(function (cell) {
+	          return cell.kind;
+	        });
+	      }));
+	    }
+	  }, {
 	    key: "getRandCell",
 	    value: function getRandCell() {
 	      return {
@@ -387,9 +432,34 @@
 	      };
 	    }
 	  }, {
+	    key: "toEasterStar",
+	    value: function toEasterStar(d) {
+	      switch (d) {
+	        case _constants.Direction.N:
+	          return EasyStar.TOP;
+	        case _constants.Direction.S:
+	          return EasyStar.BOTTOM;
+	        case _constants.Direction.W:
+	          return EasyStar.LEFT;
+	        default:
+	          return EasyStar.RIGHT;
+	      }
+	    }
+	  }, {
+	    key: "addRoad",
+	    value: function addRoad(x, y, dir) {
+	      var _this = this;
+
+	      this.g[y][x] = { x: x, y: y, dir: dir, kind: CellTypes.KIND_ROAD };
+	      this.initGrid();
+	      this.star.setDirectionalCondition(x, y, [EasyStar.BOTTOM, EasyStar.LEFT, EasyStar.TOP, EasyStar.RIGHT].filter(function (d) {
+	        return d != _this.toEasterStar(dir);
+	      }));
+	    }
+	  }, {
 	    key: "walkables",
 	    value: function walkables() {
-	      return [CellTypes.KIND_EARTH];
+	      return [CellTypes.KIND_ROAD];
 	    }
 	  }, {
 	    key: "path",
@@ -401,7 +471,7 @@
 	    key: "getCell",
 	    value: function getCell(x, y) {
 	      try {
-	        return this.g[x][y];
+	        return this.g[y][x];
 	      } catch (e) {
 	        return {};
 	      }
@@ -436,6 +506,34 @@
 
 /***/ }),
 /* 4 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	var CELL_SIZE = 64;
+	var Direction = {
+	  N: 0, E: 1, S: 2, W: 3, toSprite: function toSprite(d) {
+	    switch (d) {
+	      case 0:
+	        return 'N';
+	      case 1:
+	        return 'E';
+	      case 2:
+	        return 'S';
+	      default:
+	        return 'W';
+	    }
+	  }
+	};
+
+	exports.CELL_SIZE = CELL_SIZE;
+	exports.Direction = Direction;
+
+/***/ }),
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -446,7 +544,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _constants = __webpack_require__(5);
+	var _constants = __webpack_require__(4);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -497,7 +595,7 @@
 	    }
 	  }, {
 	    key: 'update',
-	    value: function update() {
+	    value: function update(cars) {
 	      if (this.transitionTo != null) {
 	        //var p = this.gridCoord()
 
@@ -526,7 +624,43 @@
 	          this.transitionTo = null;
 	        }
 	      } else if (this.path.length > 0) {
-	        this.transitionTo = this.path.shift();
+	        var dest = this.path[0];
+
+	        var canGo = true;
+	        var _iteratorNormalCompletion = true;
+	        var _didIteratorError = false;
+	        var _iteratorError = undefined;
+
+	        try {
+	          for (var _iterator = cars[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	            var c = _step.value;
+
+	            if (c != this) {
+	              var p = c.transitionTo || c.gridCoord();
+	              if (p.x == dest.x && p.y == dest.y) {
+	                canGo = false;
+	                break;
+	              }
+	            }
+	          }
+	        } catch (err) {
+	          _didIteratorError = true;
+	          _iteratorError = err;
+	        } finally {
+	          try {
+	            if (!_iteratorNormalCompletion && _iterator.return) {
+	              _iterator.return();
+	            }
+	          } finally {
+	            if (_didIteratorError) {
+	              throw _iteratorError;
+	            }
+	          }
+	        }
+
+	        if (canGo) this.transitionTo = this.path.shift();
+	      } else if (this.path.length == 0) {
+	        this.destinationSprite.visible = false;
 	      }
 	    }
 	  }]);
@@ -537,17 +671,151 @@
 	exports.default = Car;
 
 /***/ }),
-/* 5 */
-/***/ (function(module, exports) {
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	var CELL_SIZE = 64;
 
-	exports.CELL_SIZE = CELL_SIZE;
+	var _constants = __webpack_require__(4);
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Road = function Road(x, y, direction) {
+	  _classCallCheck(this, Road);
+
+	  this.sprite = game.add.sprite(x, y, _constants.Direction.toSprite(direction));
+	};
+
+	exports.default = Road;
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _constants = __webpack_require__(4);
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var ToolBelt = function () {
+	  function ToolBelt(stage) {
+	    _classCallCheck(this, ToolBelt);
+
+	    this.game = stage.game;
+	    this.stage = stage;
+
+	    var keyEsc = this.game.input.keyboard.addKey(Phaser.Keyboard.ESC);
+	    keyEsc.onDown.add(this.unselect, this);
+
+	    var key1 = this.game.input.keyboard.addKey(Phaser.Keyboard.ONE);
+	    key1.onDown.add(this.selectRoad, this);
+
+	    var key2 = this.game.input.keyboard.addKey(Phaser.Keyboard.TWO);
+	    key2.onDown.add(this.selectCar, this);
+
+	    var keyR = this.game.input.keyboard.addKey(Phaser.Keyboard.R);
+	    keyR.onDown.add(this.rotateSelection, this);
+
+	    this.selected = null;
+
+	    this.roadHover = this.game.add.sprite(0, 0, 'road');
+	    this.roadHover.alpha = 0.5;
+	    this.roadHover.visible = false;
+	    this.roadHover.anchor.setTo(0.5, 0.5);
+
+	    this.carHover = this.game.add.sprite(0, 0, 'car');
+	    this.carHover.alpha = 0.5;
+	    this.carHover.visible = false;
+	    this.carHover.anchor.setTo(0.5, 0.5);
+
+	    console.log("Toolbelt up");
+	  }
+
+	  _createClass(ToolBelt, [{
+	    key: 'unselect',
+	    value: function unselect() {
+	      this.selected.sprite.visible = false;
+	      this.selected = null;
+	    }
+	  }, {
+	    key: 'rotateSelection',
+	    value: function rotateSelection() {
+	      this.selected.direction = (this.selected.direction + 1) % 4;
+
+	      switch (this.selected.direction) {
+	        case _constants.Direction.E:
+	          this.selected.sprite.angle = 90;
+	          break;
+	        case _constants.Direction.S:
+	          this.selected.sprite.angle = 180;
+	          break;
+	        case _constants.Direction.W:
+	          this.selected.sprite.angle = 270;
+	          break;
+	        default:
+	          this.selected.sprite.angle = 0;
+	      }
+	    }
+	  }, {
+	    key: 'selectCar',
+	    value: function selectCar() {
+	      if (this.selected != null) this.selected.sprite.visible = false;
+	      this.selected = { sprite: this.carHover, type: 'car', direction: _constants.Direction.N };
+	      this.selected.sprite.visible = true;
+	    }
+	  }, {
+	    key: 'selectRoad',
+	    value: function selectRoad() {
+	      console.log("select road");
+	      if (this.selected != null) this.selected.sprite.visible = false;
+	      this.selected = { sprite: this.roadHover, type: 'road', direction: _constants.Direction.N };
+	      this.selected.sprite.visible = true;
+	    }
+	  }, {
+	    key: 'render',
+	    value: function render(cursorGridPos) {
+	      if (this.selected != null) {
+	        //console.log("SELECTED POS => "+cc.x+", "+cc.y)
+	        this.selected.sprite.x = cursorGridPos.x + _constants.CELL_SIZE / 2;
+	        this.selected.sprite.y = cursorGridPos.y + _constants.CELL_SIZE / 2;
+	      }
+	    }
+	  }, {
+	    key: 'onMouseDown',
+	    value: function onMouseDown() {
+	      if (this.selected != null) {
+	        var p = this.stage.cursorToGrid(this.game.input.x, this.game.input.y);
+	        var wp = this.stage.cellToWorld(p.x, p.y);
+
+	        console.log(this.selected.type);
+	        switch (this.selected.type) {
+	          case 'road':
+	            this.stage.createRoad(p.x, p.y, this.selected.direction);
+	            break;
+	          case 'car':
+	            this.stage.createCar(wp.x, wp.y);
+	            break;
+	          default:
+	        }
+	      }
+	    }
+	  }]);
+
+	  return ToolBelt;
+	}();
+
+	exports.default = ToolBelt;
 
 /***/ })
 /******/ ]);

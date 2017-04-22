@@ -48,7 +48,7 @@ class Car {
     }
   }
 
-  update() {
+  update(cars) {
     if(this.transitionTo != null) {
       //var p = this.gridCoord()
 
@@ -83,7 +83,23 @@ class Car {
       }
 
     } else if (this.path.length > 0) {
-      this.transitionTo = this.path.shift()
+      var dest = this.path[0]
+
+      var canGo = true
+      for(let c of cars) {
+        if(c != this) {
+          var p = c.transitionTo || c.gridCoord()
+          if(p.x == dest.x && p.y == dest.y) {
+            canGo = false
+            break
+          }
+        }
+      }
+
+      if(canGo) this.transitionTo = this.path.shift()
+
+    } else if (this.path.length == 0) {
+      this.destinationSprite.visible = false
     }
   }
 }

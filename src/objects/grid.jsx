@@ -1,6 +1,9 @@
+import {CELL_SIZE, Direction} from '../constants.jsx';
+
 const CellTypes = {
   KIND_EARTH : 0
 , KIND_WATER : 1
+, KIND_ROAD : 2
 }
 
 class Cell {
@@ -23,16 +26,22 @@ class Grid {
 
     this.g = [];
 
-    for (var x = 0; x < w; x++) {
+
+    for (var y = 0; y < w; y++) {
       this.g.push([])
-      for (var y = 0; y < h; y++)
-        this.g[x].push(new Cell(x, y, (Math.random() > 0.0 ? CellTypes.KIND_EARTH : CellTypes.KIND_WATER)));
+      for (var x = 0; x < h; x++)
+        this.g[y].push(new Cell(x, y, (Math.random() > 0.0 ? CellTypes.KIND_EARTH : CellTypes.KIND_WATER)));
     }
 
     this.star = new EasyStar.js()
 
-    this.star.setGrid(this.g.map(c => c.map(cell => { return cell.kind })))
+    this.initGrid()
+
     this.star.setAcceptableTiles(this.walkables())
+  }
+
+  initGrid() {
+    this.star.setGrid(this.g.map(c => c.map(cell => { return cell.kind })))
   }
 
   getRandCell() {
@@ -42,8 +51,26 @@ class Grid {
     }
   }
 
+  toEasterStar(d) {
+    switch(d) {
+      case Direction.N : return EasyStar.TOP
+      case Direction.S : return EasyStar.BOTTOM
+      case Direction.W : return EasyStar.LEFT
+      default: return EasyStar.RIGHT
+    }
+  }
+
+  addRoad(x, y, dir) {
+    this.g[y][x] = {x:x, y:y, dir: dir, kind: CellTypes.KIND_ROAD}
+    this.initGrid()
+    this.star.setDirectionalCondition(x, y,
+      [EasyStar.BOTTOM, EasyStar.LEFT, EasyStar.TOP, EasyStar.RIGHT]
+        .filter(d => d != this.toEasterStar(dir))
+    )
+  }
+
   walkables() {
-    return [CellTypes.KIND_EARTH]
+    return [CellTypes.KIND_ROAD]
   }
 
   path(from, to, callback) {
@@ -53,7 +80,7 @@ class Grid {
 
   getCell(x, y) {
     try {
-      return this.g[x][y]
+      return this.g[y][x]
     } catch (e) {
       return {}
     }
