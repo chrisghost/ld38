@@ -147,13 +147,19 @@
 
 	var _grid = __webpack_require__(3);
 
+	var _car = __webpack_require__(4);
+
+	var _car2 = _interopRequireDefault(_car);
+
+	var _constants = __webpack_require__(5);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	var CELL_SIZE = 64;
 
 	var PlayState = function (_Phaser$State) {
 	  _inherits(PlayState, _Phaser$State);
@@ -170,6 +176,8 @@
 	      this.game.load.image('earthcell', 'assets/sprites/earthcell.png');
 	      this.game.load.image('watercell', 'assets/sprites/watercell.png');
 	      this.game.load.image('cursorvisor', 'assets/sprites/cursorvisor.png');
+	      this.game.load.image('car', 'assets/sprites/car.png');
+	      this.game.load.image('destination', 'assets/sprites/destination.png');
 	      this.cursors = this.game.input.keyboard.createCursorKeys();
 	    }
 	  }, {
@@ -188,8 +196,8 @@
 	    key: 'cursorToGrid',
 	    value: function cursorToGrid(x, y) {
 	      return {
-	        x: Math.floor((x + this.game.camera.x - this.game.world.centerX) / CELL_SIZE),
-	        y: Math.floor((y + this.game.camera.y - this.game.world.centerY) / CELL_SIZE)
+	        x: Math.floor((x + this.game.camera.x - this.game.world.centerX) / _constants.CELL_SIZE),
+	        y: Math.floor((y + this.game.camera.y - this.game.world.centerY) / _constants.CELL_SIZE)
 	      };
 	    }
 	  }, {
@@ -205,7 +213,7 @@
 	  }, {
 	    key: 'create',
 	    value: function create() {
-	      this.grid = new _grid.Grid(10, 10);
+	      this.grid = new _grid.Grid(6, 6);
 	      //this.grid.printGrid()
 
 	      this.grid.forEach(function (cell) {
@@ -222,13 +230,44 @@
 	      //this.worldScale = 1.0
 
 	      this.cursorVisor = this.game.add.sprite(0, 0, 'cursorvisor');
+
+	      this.game.input.mouse.capture = true;
+
+	      this.game.input.onDown.add(function (ev) {
+	        var p = this.cursorToGrid(this.game.input.x, this.game.input.y);
+	        var wp = this.cellToWorld(p.x, p.y);
+
+	        this.createCar(wp.x, wp.y);
+	      }, this);
+
+	      this.cars = [];
+	    }
+	  }, {
+	    key: 'createCar',
+	    value: function createCar(x, y) {
+	      var car = new _car2.default(x, y, 'car', this.game);
+	      this.cars.push(car);
+	      var from = car.gridCoord();
+	      var to = this.grid.getRandCell();
+	      //console.log(to)
+
+	      this.grid.path(from, to, function (p) {
+	        if (p == null) console.log("Not path");else {
+	          console.log("Path : ");
+	          p.map(function (c) {
+	            return console.log(c);
+	          });
+	          console.log("--------");
+	          this.setPath(p);
+	        }
+	      }.bind(car));
 	    }
 	  }, {
 	    key: 'cellToWorld',
 	    value: function cellToWorld(x, y) {
 	      return {
-	        x: this.game.world.centerX + x * CELL_SIZE,
-	        y: this.game.world.centerY + y * CELL_SIZE
+	        x: this.game.world.centerX + x * _constants.CELL_SIZE,
+	        y: this.game.world.centerY + y * _constants.CELL_SIZE
 	      };
 	    }
 	  }, {
@@ -236,6 +275,9 @@
 	    value: function update() {
 	      this.moveCamera();
 	      //this.game.world.scale.set(this.worldScale)
+	      this.cars.map(function (c) {
+	        return c.update();
+	      });
 	    }
 	  }, {
 	    key: 'render',
@@ -322,12 +364,40 @@
 	    for (var x = 0; x < w; x++) {
 	      this.g.push([]);
 	      for (var y = 0; y < h; y++) {
-	        this.g[x].push(new Cell(x, y, Math.random() > 0.3 ? CellTypes.KIND_EARTH : CellTypes.KIND_WATER));
+	        this.g[x].push(new Cell(x, y, Math.random() > 0.0 ? CellTypes.KIND_EARTH : CellTypes.KIND_WATER));
 	      }
 	    }
+
+	    this.star = new EasyStar.js();
+
+	    this.star.setGrid(this.g.map(function (c) {
+	      return c.map(function (cell) {
+	        return cell.kind;
+	      });
+	    }));
+	    this.star.setAcceptableTiles(this.walkables());
 	  }
 
 	  _createClass(Grid, [{
+	    key: "getRandCell",
+	    value: function getRandCell() {
+	      return {
+	        x: Math.floor(Math.random() * this.w),
+	        y: Math.floor(Math.random() * this.h)
+	      };
+	    }
+	  }, {
+	    key: "walkables",
+	    value: function walkables() {
+	      return [CellTypes.KIND_EARTH];
+	    }
+	  }, {
+	    key: "path",
+	    value: function path(from, to, callback) {
+	      this.star.findPath(from.x, from.y, to.x, to.y, callback);
+	      this.star.calculate();
+	    }
+	  }, {
 	    key: "getCell",
 	    value: function getCell(x, y) {
 	      try {
@@ -363,6 +433,121 @@
 
 	exports.Grid = Grid;
 	exports.CellTypes = CellTypes;
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _constants = __webpack_require__(5);
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Car = function () {
+	  function Car(x, y, sprite, game) {
+	    _classCallCheck(this, Car);
+
+	    this.game = game;
+
+	    this.sprite = game.add.sprite(x, y, sprite);
+
+	    this.destinationSprite = game.add.sprite(x, y, 'destination');
+
+	    this.destinationSprite.visible = false;
+
+	    this.path = [];
+	    this.transitionTo = null;
+
+	    this.speed = {
+	      x: 1.0, y: 1.0
+	    };
+	  }
+
+	  _createClass(Car, [{
+	    key: 'cellToWorld',
+	    value: function cellToWorld(x, y) {
+	      return {
+	        x: this.game.world.centerX + x * _constants.CELL_SIZE,
+	        y: this.game.world.centerY + y * _constants.CELL_SIZE
+	      };
+	    }
+	  }, {
+	    key: 'setPath',
+	    value: function setPath(p) {
+	      this.path = p;
+	      this.destinationSprite.visible = true;
+	      var dst = this.cellToWorld(p[p.length - 1].x, p[p.length - 1].y);
+	      this.destinationSprite.x = dst.x;
+	      this.destinationSprite.y = dst.y;
+	    }
+	  }, {
+	    key: 'gridCoord',
+	    value: function gridCoord() {
+	      return {
+	        x: Math.floor((this.sprite.x - this.game.world.centerX) / _constants.CELL_SIZE),
+	        y: Math.floor((this.sprite.y - this.game.world.centerY) / _constants.CELL_SIZE)
+	      };
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update() {
+	      if (this.transitionTo != null) {
+	        //var p = this.gridCoord()
+
+	        //console.log("update ", this.transitionTo, p, (this.transitionTo.x - p.x) + ", "+ (this.transitionTo.y - p.y))
+
+	        var transitionToWorld = this.cellToWorld(this.transitionTo.x, this.transitionTo.y);
+
+	        //console.log( Math.round(transitionToWorld.x) == Math.round(this.sprite.x), Math.round(transitionToWorld.y) == Math.round(this.sprite.y))
+
+
+	        //console.log((this.sprite.x +"-"+ transitionToWorld.x) + ", "+(this.sprite.y +"-"+ transitionToWorld.y))
+
+	        this.sprite.x += (transitionToWorld.x - this.sprite.x > 0 ? 1 : -1) * this.speed.x;
+
+	        this.sprite.y += (transitionToWorld.y - this.sprite.y > 0 ? 1 : -1) * this.speed.y;
+
+	        //p = this.gridCoord()
+	        //var toWorld = this.cellToWorld(p.x, p.y)
+
+	        //console.log( Math.round(toWorld.x) + " == " + Math.round(this.sprite.x) + " && " + Math.round(toWorld.y) +" == "+Math.round(this.sprite.y))
+
+	        //if(Math.round(toWorld.x) == Math.round(this.sprite.x) &&
+	        //Math.round(toWorld.y) == Math.round(this.sprite.y)) {
+
+	        if (Math.round(this.sprite.x) == Math.round(transitionToWorld.x) && Math.round(this.sprite.y) == Math.round(transitionToWorld.y)) {
+	          this.transitionTo = null;
+	        }
+	      } else if (this.path.length > 0) {
+	        this.transitionTo = this.path.shift();
+	      }
+	    }
+	  }]);
+
+	  return Car;
+	}();
+
+	exports.default = Car;
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	var CELL_SIZE = 64;
+
+	exports.CELL_SIZE = CELL_SIZE;
 
 /***/ })
 /******/ ]);

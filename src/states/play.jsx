@@ -1,12 +1,14 @@
 import {Grid, CellTypes} from '../objects/grid.jsx';
-
-const CELL_SIZE = 64
+import Car from '../objects/car.jsx';
+import {CELL_SIZE} from '../constants.jsx';
 
 class PlayState extends Phaser.State {
   preload() {
     this.game.load.image('earthcell', 'assets/sprites/earthcell.png');
     this.game.load.image('watercell', 'assets/sprites/watercell.png');
     this.game.load.image('cursorvisor', 'assets/sprites/cursorvisor.png');
+    this.game.load.image('car', 'assets/sprites/car.png');
+    this.game.load.image('destination', 'assets/sprites/destination.png');
     this.cursors = this.game.input.keyboard.createCursorKeys();
   }
 
@@ -35,7 +37,7 @@ class PlayState extends Phaser.State {
   }
 
   create() {
-    this.grid = new Grid(10, 10);
+    this.grid = new Grid(6, 6);
     //this.grid.printGrid()
 
     this.grid.forEach(function(cell) {
@@ -56,6 +58,36 @@ class PlayState extends Phaser.State {
     //this.worldScale = 1.0
 
     this.cursorVisor = this.game.add.sprite(0,0,'cursorvisor')
+
+    this.game.input.mouse.capture = true;
+
+    this.game.input.onDown.add(function(ev) {
+      var p = this.cursorToGrid(this.game.input.x, this.game.input.y)
+      var wp = this.cellToWorld(p.x, p.y)
+
+      this.createCar(wp.x, wp.y)
+
+    }, this)
+
+    this.cars = []
+  }
+
+  createCar(x, y) {
+    var car = new Car(x, y, 'car', this.game)
+    this.cars.push(car)
+    var from = car.gridCoord()
+    var to = this.grid.getRandCell()
+    //console.log(to)
+
+    this.grid.path(from, to, function(p) {
+      if(p == null) console.log("Not path")
+      else {
+        console.log("Path : ")
+        p.map(c => console.log(c))
+        console.log("--------")
+        this.setPath(p)
+      }
+    }.bind(car))
   }
 
   cellToWorld(x, y) {
@@ -68,6 +100,7 @@ class PlayState extends Phaser.State {
   update() {
     this.moveCamera()
     //this.game.world.scale.set(this.worldScale)
+    this.cars.map(c => c.update())
   }
 
   render() {

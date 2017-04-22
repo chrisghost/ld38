@@ -1,6 +1,6 @@
 const CellTypes = {
-  KIND_EARTH : 0,
-  KIND_WATER : 1
+  KIND_EARTH : 0
+, KIND_WATER : 1
 }
 
 class Cell {
@@ -26,8 +26,29 @@ class Grid {
     for (var x = 0; x < w; x++) {
       this.g.push([])
       for (var y = 0; y < h; y++)
-        this.g[x].push(new Cell(x, y, (Math.random() > 0.3 ? CellTypes.KIND_EARTH : CellTypes.KIND_WATER)));
+        this.g[x].push(new Cell(x, y, (Math.random() > 0.0 ? CellTypes.KIND_EARTH : CellTypes.KIND_WATER)));
     }
+
+    this.star = new EasyStar.js()
+
+    this.star.setGrid(this.g.map(c => c.map(cell => { return cell.kind })))
+    this.star.setAcceptableTiles(this.walkables())
+  }
+
+  getRandCell() {
+    return {
+      x : Math.floor(Math.random() * this.w),
+      y : Math.floor(Math.random() * this.h)
+    }
+  }
+
+  walkables() {
+    return [CellTypes.KIND_EARTH]
+  }
+
+  path(from, to, callback) {
+    this.star.findPath(from.x, from.y, to.x, to.y, callback)
+    this.star.calculate()
   }
 
   getCell(x, y) {
