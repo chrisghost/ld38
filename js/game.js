@@ -50,7 +50,7 @@
 
 	var _boot2 = _interopRequireDefault(_boot);
 
-	var _play = __webpack_require__(2);
+	var _play = __webpack_require__(3);
 
 	var _play2 = _interopRequireDefault(_play);
 
@@ -68,8 +68,9 @@
 	  function Game() {
 	    _classCallCheck(this, Game);
 
-	    var _this = _possibleConstructorReturn(this, (Game.__proto__ || Object.getPrototypeOf(Game)).call(this, 1024, 768, Phaser.AUTO, 'game'));
+	    var _this = _possibleConstructorReturn(this, (Game.__proto__ || Object.getPrototypeOf(Game)).call(this, window.innerWidth, window.innerHeight, Phaser.AUTO, 'game'));
 
+	    console.log(window);
 	    window.game = _this;
 
 	    _this.state.add('boot', _boot2.default);
@@ -86,7 +87,7 @@
 
 /***/ }),
 /* 1 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -95,6 +96,8 @@
 	});
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _constants = __webpack_require__(2);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -122,7 +125,8 @@
 	      this.game.antialias = false;
 	      this.game.renderer.renderSession.roundPixels = true;
 
-	      this.game.world.setBounds(0, 0, 1920, 1920);
+	      console.log(_constants.WORLD_W, _constants.WORLD_H);
+	      this.game.world.setBounds(0, 0, _constants.WORLD_W, _constants.WORLD_H);
 
 	      this.state.start('play');
 	    }
@@ -135,6 +139,44 @@
 
 /***/ }),
 /* 2 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	var CELL_SIZE = 64;
+
+	var WORLD_CELL_X = 10;
+	var WORLD_CELL_Y = 10;
+	var WORLD_W = CELL_SIZE * WORLD_CELL_X;
+	var WORLD_H = CELL_SIZE * WORLD_CELL_Y;
+
+	var Direction = {
+	  N: 0, E: 1, S: 2, W: 3, toSprite: function toSprite(d) {
+	    switch (d) {
+	      case 0:
+	        return 'N';
+	      case 1:
+	        return 'E';
+	      case 2:
+	        return 'S';
+	      default:
+	        return 'W';
+	    }
+	  }
+	};
+
+	exports.CELL_SIZE = CELL_SIZE;
+	exports.Direction = Direction;
+	exports.WORLD_CELL_X = WORLD_CELL_X;
+	exports.WORLD_CELL_Y = WORLD_CELL_Y;
+	exports.WORLD_W = WORLD_W;
+	exports.WORLD_H = WORLD_H;
+
+/***/ }),
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -145,7 +187,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _grid = __webpack_require__(3);
+	var _grid = __webpack_require__(4);
 
 	var _car = __webpack_require__(5);
 
@@ -159,7 +201,7 @@
 
 	var _toolbelt2 = _interopRequireDefault(_toolbelt);
 
-	var _constants = __webpack_require__(4);
+	var _constants = __webpack_require__(2);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -205,8 +247,8 @@
 	    key: 'cursorToGrid',
 	    value: function cursorToGrid(x, y) {
 	      return {
-	        x: Math.floor((x + this.game.camera.x - this.game.world.centerX) / _constants.CELL_SIZE),
-	        y: Math.floor((y + this.game.camera.y - this.game.world.centerY) / _constants.CELL_SIZE)
+	        x: Math.floor((x + this.game.camera.x) / /*- this.game.world.centerX*/ /*- this.game.world.centerY*/_constants.CELL_SIZE),
+	        y: Math.floor((y + this.game.camera.y) / _constants.CELL_SIZE)
 	      };
 	    }
 	  }, {
@@ -222,7 +264,7 @@
 	  }, {
 	    key: 'create',
 	    value: function create() {
-	      this.grid = new _grid.Grid(20, 20);
+	      this.grid = new _grid.Grid(_constants.WORLD_CELL_X, _constants.WORLD_CELL_Y);
 	      //this.grid.printGrid()
 
 	      this.grid.forEach(function (cell) {
@@ -233,8 +275,8 @@
 	        //console.log(c)
 	      }.bind(this));
 
-	      this.game.camera.x = this.game.world.centerX;
-	      this.game.camera.y = this.game.world.centerY;
+	      this.game.camera.x = 0; //this.game.world.centerX
+	      this.game.camera.y = 0; //this.game.world.centerY
 
 	      //this.worldScale = 1.0
 
@@ -276,7 +318,7 @@
 	  }, {
 	    key: 'createCar',
 	    value: function createCar(x, y) {
-	      var car = new _car2.default(x, y, 'car', this.game);
+	      var car = new _car2.default(x, y, 'car', this);
 	      this.cars.push(car);
 	      var from = car.gridCoord();
 	      var to = { x: 0, y: 0 }; //this.grid.getRandCell()
@@ -297,8 +339,8 @@
 	    key: 'cellToWorld',
 	    value: function cellToWorld(x, y) {
 	      return {
-	        x: this.game.world.centerX + x * _constants.CELL_SIZE,
-	        y: this.game.world.centerY + y * _constants.CELL_SIZE
+	        x: /*this.game.world.centerX*/+x * _constants.CELL_SIZE,
+	        y: /*this.game.world.centerY*/+y * _constants.CELL_SIZE
 	      };
 	    }
 	  }, {
@@ -333,9 +375,10 @@
 	  }, {
 	    key: 'moveCamera',
 	    value: function moveCamera() {
-	      if (this.cursors.up.isDown) this.game.camera.y -= 4;else if (this.cursors.down.isDown) this.game.camera.y += 4;
+	      var cameraSpeed = 10;
+	      if (this.cursors.up.isDown) this.game.camera.y -= cameraSpeed;else if (this.cursors.down.isDown) this.game.camera.y += cameraSpeed;
 
-	      if (this.cursors.left.isDown) this.game.camera.x -= 4;else if (this.cursors.right.isDown) this.game.camera.x += 4;
+	      if (this.cursors.left.isDown) this.game.camera.x -= cameraSpeed;else if (this.cursors.right.isDown) this.game.camera.x += cameraSpeed;
 
 	      //if (game.input.keyboard.isDown(Phaser.Keyboard.Q)) this.worldScale += 0.05
 	      //else if (game.input.keyboard.isDown(Phaser.Keyboard.A)) this.worldScale -= 0.05
@@ -350,7 +393,7 @@
 	exports.default = PlayState;
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -362,7 +405,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _constants = __webpack_require__(4);
+	var _constants = __webpack_require__(2);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -505,34 +548,6 @@
 	exports.CellTypes = CellTypes;
 
 /***/ }),
-/* 4 */
-/***/ (function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	var CELL_SIZE = 64;
-	var Direction = {
-	  N: 0, E: 1, S: 2, W: 3, toSprite: function toSprite(d) {
-	    switch (d) {
-	      case 0:
-	        return 'N';
-	      case 1:
-	        return 'E';
-	      case 2:
-	        return 'S';
-	      default:
-	        return 'W';
-	    }
-	  }
-	};
-
-	exports.CELL_SIZE = CELL_SIZE;
-	exports.Direction = Direction;
-
-/***/ }),
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -544,15 +559,16 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _constants = __webpack_require__(4);
+	var _constants = __webpack_require__(2);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var Car = function () {
-	  function Car(x, y, sprite, game) {
+	  function Car(x, y, sprite, stage) {
 	    _classCallCheck(this, Car);
 
-	    this.game = game;
+	    this.game = stage.game;
+	    this.stage = stage;
 
 	    this.sprite = game.add.sprite(x, y, sprite);
 
@@ -572,8 +588,8 @@
 	    key: 'cellToWorld',
 	    value: function cellToWorld(x, y) {
 	      return {
-	        x: this.game.world.centerX + x * _constants.CELL_SIZE,
-	        y: this.game.world.centerY + y * _constants.CELL_SIZE
+	        x: /*this.game.world.centerX +*/x * /*- this.game.world.centerX*/ /*- this.game.world.centerY*/_constants.CELL_SIZE,
+	        y: /*this.game.world.centerY +*/y * _constants.CELL_SIZE
 	      };
 	    }
 	  }, {
@@ -589,8 +605,8 @@
 	    key: 'gridCoord',
 	    value: function gridCoord() {
 	      return {
-	        x: Math.floor((this.sprite.x - this.game.world.centerX) / _constants.CELL_SIZE),
-	        y: Math.floor((this.sprite.y - this.game.world.centerY) / _constants.CELL_SIZE)
+	        x: Math.floor(this.sprite.x / _constants.CELL_SIZE),
+	        y: Math.floor(this.sprite.y / _constants.CELL_SIZE)
 	      };
 	    }
 	  }, {
@@ -680,7 +696,7 @@
 	  value: true
 	});
 
-	var _constants = __webpack_require__(4);
+	var _constants = __webpack_require__(2);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -704,7 +720,7 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _constants = __webpack_require__(4);
+	var _constants = __webpack_require__(2);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -780,6 +796,7 @@
 	      console.log("select road");
 	      if (this.selected != null) this.selected.sprite.visible = false;
 	      this.selected = { sprite: this.roadHover, type: 'road', direction: _constants.Direction.N };
+	      this.selected.sprite.angle = 0;
 	      this.selected.sprite.visible = true;
 	    }
 	  }, {

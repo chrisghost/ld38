@@ -2,7 +2,7 @@ import {Grid, CellTypes} from '../objects/grid.jsx';
 import Car from '../objects/car.jsx';
 import Road from '../objects/road.jsx';
 import ToolBelt from '../objects/toolbelt.jsx';
-import {CELL_SIZE, Direction} from '../constants.jsx';
+import {CELL_SIZE, Direction, WORLD_CELL_X, WORLD_CELL_Y } from '../constants.jsx';
 
 class PlayState extends Phaser.State {
   preload() {
@@ -25,8 +25,8 @@ class PlayState extends Phaser.State {
 
   cursorToGrid(x, y) {
     return {
-      x: Math.floor(((x + this.game.camera.x) - this.game.world.centerX) / CELL_SIZE),
-      y: Math.floor(((y + this.game.camera.y) - this.game.world.centerY) / CELL_SIZE)
+      x: Math.floor(((x + this.game.camera.x) /*- this.game.world.centerX*/) / CELL_SIZE),
+      y: Math.floor(((y + this.game.camera.y) /*- this.game.world.centerY*/) / CELL_SIZE)
     }
   }
 
@@ -40,7 +40,7 @@ class PlayState extends Phaser.State {
   }
 
   create() {
-    this.grid = new Grid(20, 20);
+    this.grid = new Grid(WORLD_CELL_X, WORLD_CELL_Y)
     //this.grid.printGrid()
 
     this.grid.forEach(function(cell) {
@@ -51,8 +51,8 @@ class PlayState extends Phaser.State {
       //console.log(c)
     }.bind(this))
 
-    this.game.camera.x = this.game.world.centerX
-    this.game.camera.y = this.game.world.centerY
+    this.game.camera.x = 0 //this.game.world.centerX
+    this.game.camera.y = 0 //this.game.world.centerY
 
     //this.worldScale = 1.0
 
@@ -89,7 +89,7 @@ class PlayState extends Phaser.State {
   }
 
   createCar(x, y) {
-    var car = new Car(x, y, 'car', this.game)
+    var car = new Car(x, y, 'car', this)
     this.cars.push(car)
     var from = car.gridCoord()
     var to = {x: 0, y: 0} //this.grid.getRandCell()
@@ -108,8 +108,8 @@ class PlayState extends Phaser.State {
 
   cellToWorld(x, y) {
     return {
-      x: this.game.world.centerX + x * CELL_SIZE
-    , y: this.game.world.centerY + y * CELL_SIZE
+      x: /*this.game.world.centerX*/ + x * CELL_SIZE
+    , y: /*this.game.world.centerY*/ + y * CELL_SIZE
     }
   }
 
@@ -140,15 +140,16 @@ class PlayState extends Phaser.State {
   }
 
   moveCamera() {
+    var cameraSpeed = 10
     if (this.cursors.up.isDown)
-      this.game.camera.y -= 4;
+      this.game.camera.y -= cameraSpeed
     else if (this.cursors.down.isDown)
-      this.game.camera.y += 4;
+      this.game.camera.y += cameraSpeed
 
     if (this.cursors.left.isDown)
-      this.game.camera.x -= 4;
+      this.game.camera.x -= cameraSpeed
     else if (this.cursors.right.isDown)
-      this.game.camera.x += 4;
+      this.game.camera.x += cameraSpeed
 
     //if (game.input.keyboard.isDown(Phaser.Keyboard.Q)) this.worldScale += 0.05
     //else if (game.input.keyboard.isDown(Phaser.Keyboard.A)) this.worldScale -= 0.05

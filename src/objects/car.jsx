@@ -1,8 +1,9 @@
 import {CELL_SIZE} from '../constants.jsx';
 
 class Car {
-  constructor(x, y, sprite, game) {
-    this.game = game
+  constructor(x, y, sprite, stage) {
+    this.game = stage.game
+    this.stage = stage
 
     this.sprite = game.add.sprite(
       x,
@@ -28,8 +29,8 @@ class Car {
 
   cellToWorld(x, y) {
     return {
-      x: this.game.world.centerX + x * CELL_SIZE
-    , y: this.game.world.centerY + y * CELL_SIZE
+      x: /*this.game.world.centerX +*/ x * CELL_SIZE
+    , y: /*this.game.world.centerY +*/ y * CELL_SIZE
     }
   }
 
@@ -43,8 +44,8 @@ class Car {
 
   gridCoord() {
     return {
-      x: Math.floor((this.sprite.x - this.game.world.centerX) / CELL_SIZE),
-      y: Math.floor((this.sprite.y - this.game.world.centerY) / CELL_SIZE)
+      x: Math.floor((this.sprite.x /*- this.game.world.centerX*/) / CELL_SIZE),
+      y: Math.floor((this.sprite.y /*- this.game.world.centerY*/) / CELL_SIZE)
     }
   }
 

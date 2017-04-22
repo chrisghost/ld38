@@ -63,6 +63,7 @@ class ToolBelt {
     console.log("select road")
     if(this.selected != null) this.selected.sprite.visible = false
     this.selected = { sprite: this.roadHover, type: 'road', direction: Direction.N }
+    this.selected.sprite.angle = 0
     this.selected.sprite.visible = true
   }
 
