@@ -149,7 +149,7 @@
 	var CELL_SIZE = 64;
 
 	var WORLD_CELL_X = 10;
-	var WORLD_CELL_Y = 10;
+	var WORLD_CELL_Y = 6;
 	var WORLD_W = CELL_SIZE * WORLD_CELL_X;
 	var WORLD_H = CELL_SIZE * WORLD_CELL_Y;
 
@@ -225,7 +225,11 @@
 	    value: function preload() {
 	      this.game.load.image('earthcell', 'assets/sprites/earthcell.png');
 	      this.game.load.image('watercell', 'assets/sprites/watercell.png');
+	      this.game.load.image('ironcell', 'assets/sprites/ironcell.png');
+	      this.game.load.image('coalcell', 'assets/sprites/coalcell.png');
+	      this.game.load.image('stonecell', 'assets/sprites/stonecell.png');
 	      this.game.load.image('cursorvisor', 'assets/sprites/cursorvisor.png');
+	      this.game.load.image('ship', 'assets/sprites/ship.png');
 	      this.game.load.image('car', 'assets/sprites/car.png');
 	      this.game.load.image('road', 'assets/sprites/roadN.png');
 	      this.game.load.image('destination', 'assets/sprites/destination.png');
@@ -239,6 +243,14 @@
 	          return 'earthcell';
 	        case _grid.CellTypes.KIND_WATER:
 	          return 'watercell';
+	        case _grid.CellTypes.KIND_COAL:
+	          return 'coalcell';
+	        case _grid.CellTypes.KIND_IRON:
+	          return 'ironcell';
+	        case _grid.CellTypes.KIND_STONE:
+	          return 'stonecell';
+	        case _grid.CellTypes.KIND_SHIP:
+	          return 'ship';
 	        default:
 	          return 'earthcell';
 	      }
@@ -264,16 +276,8 @@
 	  }, {
 	    key: 'create',
 	    value: function create() {
-	      this.grid = new _grid.Grid(_constants.WORLD_CELL_X, _constants.WORLD_CELL_Y);
+	      this.grid = new _grid.Grid(_constants.WORLD_CELL_X, _constants.WORLD_CELL_Y, this);
 	      //this.grid.printGrid()
-
-	      this.grid.forEach(function (cell) {
-
-	        var p = this.cellToWorld(cell.x, cell.y);
-
-	        var c = this.game.add.sprite(p.x, p.y, this.cellSpriteName(cell.kind));
-	        //console.log(c)
-	      }.bind(this));
 
 	      this.game.camera.x = 0; //this.game.world.centerX
 	      this.game.camera.y = 0; //this.game.world.centerY
@@ -358,7 +362,7 @@
 	    key: 'render',
 	    value: function render() {
 	      //console.log("Drawing")
-	      this.game.debug.cameraInfo(this.game.camera, 32, 32);
+	      //this.game.debug.cameraInfo(this.game.camera, 32, 32);
 	      var cc = this.getCellUnderCursor();
 
 	      if (cc != null) {
@@ -412,16 +416,23 @@
 	var CellTypes = {
 	  KIND_EARTH: 0,
 	  KIND_WATER: 1,
-	  KIND_ROAD: 2
+	  KIND_ROAD: 2,
+	  KIND_STONE: 3,
+	  KIND_IRON: 4,
+	  KIND_COAL: 5,
+	  KIND_SHIP: 999
 	};
 
 	var Cell = function () {
-	  function Cell(x, y, kind) {
+	  function Cell(x, y, kind, stage) {
 	    _classCallCheck(this, Cell);
 
 	    this.x = x;
 	    this.y = y;
 	    this.kind = kind;
+
+	    var p = stage.cellToWorld(x, y);
+	    this.sprite = stage.game.add.sprite(p.x, p.y, stage.cellSpriteName(kind));
 	  }
 
 	  _createClass(Cell, [{
@@ -435,7 +446,7 @@
 	}();
 
 	var Grid = function () {
-	  function Grid(w, h) {
+	  function Grid(w, h, stage) {
 	    _classCallCheck(this, Grid);
 
 	    this.w = w;
@@ -443,12 +454,28 @@
 
 	    this.g = [];
 
-	    for (var y = 0; y < w; y++) {
+	    this.stage = stage;
+
+	    var waterTiles = 0;
+
+	    for (var y = 0; y < h; y++) {
 	      this.g.push([]);
-	      for (var x = 0; x < h; x++) {
-	        this.g[y].push(new Cell(x, y, Math.random() > 0.0 ? CellTypes.KIND_EARTH : CellTypes.KIND_WATER));
+	      for (var x = 0; x < w; x++) {
+
+	        var hasOnlyEarthNeighbours = this.neighbours(x, y).reduceRight(function (acc, c) {
+	          return acc && c.kind == CellTypes.KIND_EARTH;
+	        }, true);
+
+	        var c = new Cell(x, y, hasOnlyEarthNeighbours && waterTiles < 6 && Math.random() < 0.3 ? CellTypes.KIND_WATER : CellTypes.KIND_EARTH, this.stage);
+
+	        this.g[y].push(c);
+
+	        if (c.kind == CellTypes.KIND_WATER) waterTiles++;
 	      }
 	    }
+
+	    this.putResources();
+	    this.putShip();
 
 	    this.star = new EasyStar.js();
 
@@ -458,6 +485,45 @@
 	  }
 
 	  _createClass(Grid, [{
+	    key: "putShip",
+	    value: function putShip() {
+
+	      var shipC = this.getRandCell(CellTypes.KIND_EARTH);
+
+	      if (this.neighbours(shipC.x, shipC.y).reduceRight(function (acc, c) {
+	        return acc && c.kind == CellTypes.KIND_EARTH;
+	      }, true)) {
+	        shipC.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_SHIP));
+	        shipC.kind = CellTypes.KIND_SHIP;
+	      } else this.putShip();
+	    }
+	  }, {
+	    key: "neighbours",
+	    value: function neighbours(x, y) {
+	      var _this = this;
+
+	      return [{ x: x - 1, y: y }, { x: x + 1, y: y }, { x: x, y: y + 1 }, { x: x, y: y - 1 }].map(function (p) {
+	        return _this.getCell(p.x, p.y);
+	      }).filter(function (c) {
+	        return c != null;
+	      });
+	    }
+	  }, {
+	    key: "putResources",
+	    value: function putResources() {
+	      var c1 = this.getRandCell(CellTypes.KIND_EARTH);
+	      c1.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_STONE));
+	      c1.kind = CellTypes.KIND_STONE;
+
+	      var c2 = this.getRandCell(CellTypes.KIND_EARTH);
+	      c2.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_COAL));
+	      c2.kind = CellTypes.KIND_COAL;
+
+	      var c3 = this.getRandCell(CellTypes.KIND_EARTH);
+	      c3.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_IRON));
+	      c3.kind = CellTypes.KIND_IRON;
+	    }
+	  }, {
 	    key: "initGrid",
 	    value: function initGrid() {
 	      this.star.setGrid(this.g.map(function (c) {
@@ -468,11 +534,12 @@
 	    }
 	  }, {
 	    key: "getRandCell",
-	    value: function getRandCell() {
-	      return {
-	        x: Math.floor(Math.random() * this.w),
-	        y: Math.floor(Math.random() * this.h)
-	      };
+	    value: function getRandCell(kind) {
+	      //kind = kind || CellTypes.KIND_EARTH
+
+	      var c = this.getCell(Math.floor(Math.random() * this.w), Math.floor(Math.random() * this.h));
+
+	      if (kind == null || c.kind == kind) return c;else return this.getRandCell(kind);
 	    }
 	  }, {
 	    key: "toEasterStar",
@@ -491,12 +558,12 @@
 	  }, {
 	    key: "addRoad",
 	    value: function addRoad(x, y, dir) {
-	      var _this = this;
+	      var _this2 = this;
 
 	      this.g[y][x] = { x: x, y: y, dir: dir, kind: CellTypes.KIND_ROAD };
 	      this.initGrid();
 	      this.star.setDirectionalCondition(x, y, [EasyStar.BOTTOM, EasyStar.LEFT, EasyStar.TOP, EasyStar.RIGHT].filter(function (d) {
-	        return d != _this.toEasterStar(dir);
+	        return d != _this2.toEasterStar(dir);
 	      }));
 	    }
 	  }, {
@@ -516,7 +583,7 @@
 	      try {
 	        return this.g[y][x];
 	      } catch (e) {
-	        return {};
+	        return null;
 	      }
 	    }
 	  }, {

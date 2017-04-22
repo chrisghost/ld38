@@ -8,7 +8,11 @@ class PlayState extends Phaser.State {
   preload() {
     this.game.load.image('earthcell', 'assets/sprites/earthcell.png');
     this.game.load.image('watercell', 'assets/sprites/watercell.png');
+    this.game.load.image('ironcell', 'assets/sprites/ironcell.png');
+    this.game.load.image('coalcell', 'assets/sprites/coalcell.png');
+    this.game.load.image('stonecell', 'assets/sprites/stonecell.png');
     this.game.load.image('cursorvisor', 'assets/sprites/cursorvisor.png');
+    this.game.load.image('ship', 'assets/sprites/ship.png');
     this.game.load.image('car', 'assets/sprites/car.png');
     this.game.load.image('road', 'assets/sprites/roadN.png');
     this.game.load.image('destination', 'assets/sprites/destination.png');
@@ -19,6 +23,10 @@ class PlayState extends Phaser.State {
     switch (kind) {
       case CellTypes.KIND_EARTH: return 'earthcell'
       case CellTypes.KIND_WATER: return 'watercell'
+      case CellTypes.KIND_COAL: return 'coalcell'
+      case CellTypes.KIND_IRON: return 'ironcell'
+      case CellTypes.KIND_STONE: return 'stonecell'
+      case CellTypes.KIND_SHIP: return 'ship'
       default: return 'earthcell'
     }
   }
@@ -40,16 +48,8 @@ class PlayState extends Phaser.State {
   }
 
   create() {
-    this.grid = new Grid(WORLD_CELL_X, WORLD_CELL_Y)
+    this.grid = new Grid(WORLD_CELL_X, WORLD_CELL_Y, this)
     //this.grid.printGrid()
-
-    this.grid.forEach(function(cell) {
-
-      var p = this.cellToWorld(cell.x, cell.y)
-
-      var c = this.game.add.sprite( p.x, p.y, this.cellSpriteName(cell.kind))
-      //console.log(c)
-    }.bind(this))
 
     this.game.camera.x = 0 //this.game.world.centerX
     this.game.camera.y = 0 //this.game.world.centerY
@@ -122,7 +122,7 @@ class PlayState extends Phaser.State {
 
   render() {
     //console.log("Drawing")
-    this.game.debug.cameraInfo(this.game.camera, 32, 32);
+    //this.game.debug.cameraInfo(this.game.camera, 32, 32);
     var cc = this.getCellUnderCursor()
 
     if (cc != null) {

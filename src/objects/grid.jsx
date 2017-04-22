@@ -4,14 +4,21 @@ const CellTypes = {
   KIND_EARTH : 0
 , KIND_WATER : 1
 , KIND_ROAD : 2
+, KIND_STONE : 3
+, KIND_IRON : 4
+, KIND_COAL : 5
+, KIND_SHIP : 999
 }
 
 class Cell {
 
-  constructor(x, y, kind) {
+  constructor(x, y, kind, stage) {
     this.x = x;
     this.y = y;
     this.kind = kind;
+
+    var p = stage.cellToWorld(x, y)
+    this.sprite = stage.game.add.sprite( p.x, p.y, stage.cellSpriteName(kind))
   }
 
   print() {
@@ -20,18 +27,40 @@ class Cell {
 }
 
 class Grid {
-  constructor(w, h) {
+  constructor(w, h, stage) {
     this.w = w;
     this.h = h;
 
     this.g = [];
 
+    this.stage = stage
 
-    for (var y = 0; y < w; y++) {
+    var waterTiles = 0
+
+    for (var y = 0; y < h; y++) {
       this.g.push([])
-      for (var x = 0; x < h; x++)
-        this.g[y].push(new Cell(x, y, (Math.random() > 0.0 ? CellTypes.KIND_EARTH : CellTypes.KIND_WATER)));
+      for (var x = 0; x < w; x++) {
+
+        var hasOnlyEarthNeighbours =
+          this.neighbours(x, y).reduceRight(
+            function(acc, c) {
+              return acc && c.kind == CellTypes.KIND_EARTH}, true)
+
+        var c = new Cell(
+          x, y,
+          ((hasOnlyEarthNeighbours && (waterTiles < 6) && (Math.random() < 0.3)) ?
+            CellTypes.KIND_WATER : CellTypes.KIND_EARTH)
+          , this.stage)
+
+        this.g[y].push(c)
+
+        if(c.kind == CellTypes.KIND_WATER) waterTiles++
+
+      }
     }
+
+    this.putResources()
+    this.putShip()
 
     this.star = new EasyStar.js()
 
@@ -40,15 +69,58 @@ class Grid {
     this.star.setAcceptableTiles(this.walkables())
   }
 
+  putShip() {
+
+    var shipC = this.getRandCell(CellTypes.KIND_EARTH)
+
+    if(this.neighbours(shipC.x, shipC.y).reduceRight(
+      function(acc, c) {
+        return acc && c.kind == CellTypes.KIND_EARTH}, true)) {
+      shipC.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_SHIP))
+      shipC.kind = CellTypes.KIND_SHIP
+    } else
+      this.putShip()
+
+  }
+
+  neighbours(x, y) {
+    return [ {x: x - 1, y: y}
+           , {x: x + 1, y: y}
+           , {x: x, y: y + 1}
+           , {x: x, y: y - 1}
+           ].map(p => this.getCell(p.x, p.y))
+            .filter(c => c != null)
+  }
+
+  putResources() {
+    var c1 = this.getRandCell(CellTypes.KIND_EARTH)
+    c1.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_STONE))
+    c1.kind = CellTypes.KIND_STONE
+
+    var c2 = this.getRandCell(CellTypes.KIND_EARTH)
+    c2.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_COAL))
+    c2.kind = CellTypes.KIND_COAL
+
+    var c3 = this.getRandCell(CellTypes.KIND_EARTH)
+    c3.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_IRON))
+    c3.kind = CellTypes.KIND_IRON
+  }
+
   initGrid() {
     this.star.setGrid(this.g.map(c => c.map(cell => { return cell.kind })))
   }
 
-  getRandCell() {
-    return {
-      x : Math.floor(Math.random() * this.w),
-      y : Math.floor(Math.random() * this.h)
-    }
+  getRandCell(kind) {
+    //kind = kind || CellTypes.KIND_EARTH
+
+    var c = this.getCell(
+      Math.floor(Math.random() * this.w)
+     ,Math.floor(Math.random() * this.h))
+
+    if(kind == null || c.kind == kind)
+      return c
+    else
+      return this.getRandCell(kind)
   }
 
   toEasterStar(d) {
@@ -79,11 +151,7 @@ class Grid {
   }
 
   getCell(x, y) {
-    try {
-      return this.g[y][x]
-    } catch (e) {
-      return {}
-    }
+    try { return this.g[y][x] } catch (e) { return null }
   }
 
   forEach(f) {

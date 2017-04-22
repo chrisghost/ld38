@@ -1,7 +1,7 @@
 const CELL_SIZE = 64
 
 const WORLD_CELL_X = 10
-const WORLD_CELL_Y = 10
+const WORLD_CELL_Y = 6
 const WORLD_W = CELL_SIZE * WORLD_CELL_X
 const WORLD_H = CELL_SIZE * WORLD_CELL_Y
 
