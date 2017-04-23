@@ -12,6 +12,7 @@ class ToolBelt {
     , {key: Phaser.Keyboard.TWO, action: (() => this.select('car'))}
     , {key: Phaser.Keyboard.THREE, action: (() => this.select('mine'))}
     , {key: Phaser.Keyboard.FOUR, action: (() => this.select('depot'))}
+    , {key: Phaser.Keyboard.FIVE, action: (() => this.select('furnace'))}
     , {key: Phaser.Keyboard.R, action: this.rotateSelection}
 
     ].map(k => {
@@ -27,6 +28,7 @@ class ToolBelt {
       'road',
       'car',
       'mine',
+      'furnace',
       'depot'
     ].map(function(s) {
       var hoverSprite = this.game.add.sprite(0, 0, s)
@@ -95,6 +97,8 @@ class ToolBelt {
         case 'car' : this.stage.createCar(wp.x, wp.y)
           break;
         case 'depot' : this.stage.createDepot(wp.x, wp.y)
+          break;
+        case 'furnace' : this.stage.createFurnace(wp.x, wp.y)
           break;
         case 'mine' : this.stage.createMine(wp.x, wp.y)
           break;

@@ -1,5 +1,5 @@
 import {CellTypes} from '../objects/grid.jsx';
-import {CellProduction} from '../constants.jsx';
+import {CellProduction, Resources} from '../constants.jsx';
 
 class Mine {
   constructor(x, y, sprite, stage) {
@@ -17,7 +17,8 @@ class Mine {
 
     this.gridPos = stage.worldToGrid(x, y)
 
-    this.product = stage.grid.getCell(this.gridPos.x, this.gridPos.y).kind
+    console.log(this.gridPos)
+    this.product = stage.grid.getCell(this.gridPos.x, this.gridPos.y).kind || null
     this.productionTime = CellProduction(this.product)
     this.productionTimer = 0
   }
@@ -26,20 +27,32 @@ class Mine {
     var t = this.game.time.elapsed
 
     this.productionTimer += t
-    if(this.productionTimer >= this.productionTime) {
-      console.log("Producted ! "+this.product)
-
-      var d = this.stage.findClosestDepot(this.x, this.y)
-
+    if(this.product != null && this.productionTimer >= this.productionTime && !this.stage.hasCarAt(this.gridPos)) {
+      //console.log("Producted ! "+this.product)
       this.productionTimer = 0
 
+      var d = null
+      switch(this.product) {
+        case CellTypes.KIND_IRON :
+          d = this.stage.findClosestFurnace(this.x, this.y, false)
+          break
+        case CellTypes.KIND_COAL :
+          d = this.stage.findClosestFurnace(this.x, this.y, true)
+          break
+        case CellTypes.KIND_STONE :
+          d = this.stage.findClosestFurnace(this.x, this.y, false)
+          break
+      }
+
       if(d != null) {
-        //console.log(d)
-        this.stage.createCar(this.x, this.y, {x: d.gridPos.x, y: d.gridPos.y}, this.product)
+        this.stage.createCar(this.x, this.y, {x: d.gridPos.x, y: d.gridPos.y}, this.product, 10)
       } else {
-        console.log("no route")
+        console.log("no route", this.x, this.y)
       }
     }
+  }
+  getInfo() {
+    return "Mine of "+this.product
   }
 }
  export default Mine

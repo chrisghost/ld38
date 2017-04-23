@@ -17,5 +17,8 @@ class Depot {
 
     this.gridPos = stage.worldToGrid(x, y)
   }
+  getInfo() {
+    return "Depot"
+  }
 }
  export default Depot

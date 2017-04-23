@@ -1,16 +1,43 @@
-import {CELL_SIZE} from '../constants.jsx';
+import {CELL_SIZE, Resources} from '../constants.jsx';
+import {CellTypes} from '../objects/grid.jsx';
 import Depot from '../objects/depot.jsx';
+import Furnace from '../objects/furnace.jsx';
 
 class Car {
-  constructor(x, y, sprite, stage, load) {
+  constructor(x, y, sprite, stage, load, n) {
     this.game = stage.game
     this.stage = stage
     this.load = load
+    this.number = n
 
     this.sprite = game.add.sprite(
       x,
       y,
       sprite
+    )
+
+    var icon = ''
+    switch(load) {
+      case CellTypes.KIND_IRON:
+        icon = 'ironicon'
+          break
+      case CellTypes.KIND_STONE :
+        icon = 'stoneicon'
+          break
+      case CellTypes.KIND_COAL :
+        icon = 'coalicon'
+          break
+      case Resources.IRON_PLATE :
+        icon = 'ironplateicon'
+          break
+      case Resources.STONE_BRICK :
+        icon = 'stonebrickicon'
+          break
+    }
+    this.iconSprite = game.add.sprite(
+      x,
+      y,
+      icon
     )
 
     this.destinationSprite = game.add.sprite(
@@ -65,6 +92,9 @@ class Car {
         (transitionToWorld.y - this.sprite.y) > 0 ? 1 : -1)
           * this.speed.y)
 
+      this.iconSprite.x = this.sprite.x
+      this.iconSprite.y = this.sprite.y
+
       if(Math.round(this.sprite.x) == Math.round(transitionToWorld.x) &&
          Math.round(this.sprite.y) == Math.round(transitionToWorld.y)) {
         this.transitionTo = null
@@ -98,13 +128,16 @@ class Car {
 
         //console.log("no path -- ", gC, c)
 
-      if(c != null && c instanceof Depot) {
-        this.stage.addResource(this.load)
-
-      //console.log("DESTROUUUUU")
+      if(c != null) {
+        if(c instanceof Depot) {
+          this.stage.addResource(this.load, this.number)
+        } else if(c instanceof Furnace) {
+          c.add(this.load, this.number)
+        }
       }
 
       this.sprite.destroy()
+      this.iconSprite.destroy()
       return true
     }
 

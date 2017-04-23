@@ -1,10 +1,11 @@
 import {Grid, CellTypes} from '../objects/grid.jsx';
 import Car from '../objects/car.jsx';
 import Mine from '../objects/mine.jsx';
+import Furnace from '../objects/furnace.jsx';
 import Depot from '../objects/depot.jsx';
 import Road from '../objects/road.jsx';
 import ToolBelt from '../objects/toolbelt.jsx';
-import {CELL_SIZE, Direction, WORLD_CELL_X, WORLD_CELL_Y } from '../constants.jsx';
+import {Resources, CELL_SIZE, Direction, WORLD_CELL_X, WORLD_CELL_Y } from '../constants.jsx';
 
 class PlayState extends Phaser.State {
   preload() {
@@ -15,8 +16,14 @@ class PlayState extends Phaser.State {
     this.game.load.image('stonecell', 'assets/sprites/stonecell.png');
     this.game.load.image('cursorvisor', 'assets/sprites/cursorvisor.png');
     this.game.load.image('ship', 'assets/sprites/ship.png');
+    this.game.load.image('furnace', 'assets/sprites/furnace.png');
     this.game.load.image('car', 'assets/sprites/car.png');
     this.game.load.image('mine', 'assets/sprites/mine.png');
+    this.game.load.image('ironicon', 'assets/sprites/ironicon.png');
+    this.game.load.image('coalicon', 'assets/sprites/coalicon.png');
+    this.game.load.image('stoneicon', 'assets/sprites/stoneicon.png');
+    this.game.load.image('ironplateicon', 'assets/sprites/ironplateicon.png');
+    this.game.load.image('stonebrickicon', 'assets/sprites/stonebrickicon.png');
     this.game.load.image('depot', 'assets/sprites/depot.png');
     this.game.load.image('road', 'assets/sprites/roadN.png');
     this.game.load.image('destination', 'assets/sprites/destination.png');
@@ -37,8 +44,8 @@ class PlayState extends Phaser.State {
 
   worldToGrid(x, y) {
     return {
-      x: Math.floor(((x + this.game.camera.x) /*- this.game.world.centerX*/) / CELL_SIZE),
-      y: Math.floor(((y + this.game.camera.y) /*- this.game.world.centerY*/) / CELL_SIZE)
+      x: Math.floor(((x + this.game.camera.x) ) / CELL_SIZE),
+      y: Math.floor(((y + this.game.camera.y) ) / CELL_SIZE)
     }
   }
 
@@ -72,16 +79,16 @@ class PlayState extends Phaser.State {
     this.mines = []
 
     this.depots = []
+    this.furnaces = []
 
     this.resources = {}
-      this.resources[CellTypes.KIND_COAL] = 0
-      this.resources[CellTypes.KIND_IRON] = 0
-      this.resources[CellTypes.KIND_STONE] = 0
+    this.resources[Resources.IRON_PLATE] = 0
+    this.resources[Resources.STONE_BRICK] = 0
   }
 
-  addResource(load) {
-    this.resources[load] = this.resources[load] + 1
-    console.log(load, this.resources)
+  addResource(load, n) {
+    this.resources[load] = this.resources[load] + n
+    console.log(load, n, this.resources)
   }
 
   createRoad(x, y, dir) {
@@ -104,12 +111,31 @@ class PlayState extends Phaser.State {
     this.grid.addRoad(x, y, dir)
   }
 
+  hasCarAt(x, y) {
+    for(let c of this.cars) {
+      if(c != this) {
+        var p = c.transitionTo || c.gridCoord()
+        if(p.x == x && p.y == y) {
+          return true
+        }
+      }
+    }
+    return false
+  }
+
   getBuilding(x, y) {
-    return this.mines.concat(this.depots)
+    return this.mines.concat(this.depots).concat(this.furnaces)
       .filter(function(m) {
         //console.log("... >> getBuilding", m.gridPos)
         return (m.gridPos.x == x && m.gridPos.y == y)
       })[0]
+  }
+
+  createFurnace(x, y) {
+    this.furnaces.push(new Furnace(x, y, 'furnace', this))
+
+    var gridCoords = this.worldToGrid(x, y)
+    this.grid.addBuilding(gridCoords.x,gridCoords.y)
   }
 
   createDepot(x, y) {
@@ -119,8 +145,8 @@ class PlayState extends Phaser.State {
     this.grid.addBuilding(gridCoords.x,gridCoords.y)
   }
 
-  createCar(x, y, to, load) {
-    to = to || null // {x: 0, y: 0}
+  createCar(x, y, to, load, n) {
+    to = to || null
     load = load || null
 
     var from = this.worldToGrid(x, y)
@@ -128,12 +154,9 @@ class PlayState extends Phaser.State {
     this.grid.path(from, to, function(p) {
       if(p == null) console.log("Not path")
       else {
-        var car = new Car(x, y, 'car', this, load)
+        var car = new Car(x, y, 'car', this, load, n)
         car.setPath(p)
         this.cars.push(car)
-        //console.log("Path : ")
-        //p.map(c => console.log(c))
-        //console.log("--------")
       }
     }.bind(this))
   }
@@ -154,11 +177,33 @@ class PlayState extends Phaser.State {
     }
   }
 
+  findClosestFurnace(x, y, fuel) {
+    try {
+    return this.furnaces.map(
+      function(d) {
+        return {dist: Phaser.Math.distance(d.x, d.y, x, y), furnace: d}
+      })
+      .filter(e => e.dist > 0 )
+      .map (function(e) {
+        return e
+      })
+      .sort(function(a, b) {
+        if(a.dist < b.dist) return -1
+        else return 1
+      }).find(function(f) {
+        //console.log("findingFurnace, ", f.furnace.needFuel(), f.furnace.needMatter())
+        if(fuel) return f.furnace.needFuel()
+        else return f.furnace.needMatter()
+      }).furnace
+    } catch (e) {
+      return null
+    }
+  }
+
   findClosestDepot(x, y) {
     try {
     return this.depots.map(
       function(d) {
-        //console.log(d, d.x, d.y, x, y)
         return {dist: Phaser.Math.distance(d.x, d.y, x, y), depot: d}
       })
       .filter(e => e.dist > 0 )
@@ -178,6 +223,7 @@ class PlayState extends Phaser.State {
         .filter(function(c) { return !c.update(this.cars)}.bind(this))
 
     this.mines.map(c => c.update())
+    this.furnaces.map(c => c.update())
 
   }
 
@@ -192,12 +238,17 @@ class PlayState extends Phaser.State {
       this.cursorVisor.x = cPos.x
       this.cursorVisor.y = cPos.y
 
+      var b = this.getBuilding(cc.x, cc.y)
+      if(b != null) {
+        this.game.debug.text( "Building: " + b.getInfo(), 600, 180 );
+      }
+
       this.game.debug.text( "Cursor hovering : " + cc.x+", "+cc.y + " Kind : "+cc.kind , 100, 380 );
 
       this.game.debug.text( "Resources: " +
-        " IRON : " + this.resources[CellTypes.KIND_IRON] +
-        " | COAL : " + this.resources[CellTypes.KIND_COAL] +
-        " | STONE : " + this.resources[CellTypes.KIND_STONE], 100, 20)
+        " IRON PLATE : " + this.resources[Resources.IRON_PLATE] +
+        " | STONE BRICK : " + this.resources[Resources.STONE_BRICK]
+        , 100, 20)
 
       this.toolbelt.render(cPos)
 

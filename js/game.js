@@ -146,16 +146,21 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.CellProduction = exports.WORLD_H = exports.WORLD_W = exports.WORLD_CELL_Y = exports.WORLD_CELL_X = exports.Direction = exports.CELL_SIZE = undefined;
+	exports.Resources = exports.CellProduction = exports.WORLD_H = exports.WORLD_W = exports.WORLD_CELL_Y = exports.WORLD_CELL_X = exports.Direction = exports.CELL_SIZE = undefined;
 
 	var _grid = __webpack_require__(3);
 
 	var CELL_SIZE = 64;
 
-	var WORLD_CELL_X = 10;
-	var WORLD_CELL_Y = 6;
+	var WORLD_CELL_X = 20;
+	var WORLD_CELL_Y = 20;
 	var WORLD_W = CELL_SIZE * WORLD_CELL_X;
 	var WORLD_H = CELL_SIZE * WORLD_CELL_Y;
+
+	var Resources = {
+	  IRON_PLATE: 1,
+	  STONE_BRICK: 2
+	};
 
 	var Direction = {
 	  N: 0, E: 1, S: 2, W: 3, toSprite: function toSprite(d) {
@@ -176,11 +181,11 @@
 
 	  switch (t) {
 	    case _grid.CellTypes.KIND_STONE:
-	      return 1000;break;
+	      return 3000;break;
 	    case _grid.CellTypes.KIND_COAL:
-	      return 1500;break;
+	      return 5500;break;
 	    case _grid.CellTypes.KIND_IRON:
-	      return 2000;break;
+	      return 8000;break;
 	    default:
 	      return 0;
 	  }
@@ -193,6 +198,7 @@
 	exports.WORLD_W = WORLD_W;
 	exports.WORLD_H = WORLD_H;
 	exports.CellProduction = CellProduction;
+	exports.Resources = Resources;
 
 /***/ }),
 /* 3 */
@@ -309,17 +315,23 @@
 	  }, {
 	    key: "putResources",
 	    value: function putResources() {
-	      var c1 = this.getRandCell(CellTypes.KIND_EARTH);
-	      c1.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_STONE));
-	      c1.kind = CellTypes.KIND_STONE;
+	      for (var i = 0; i < 10; i++) {
+	        var c1 = this.getRandCell(CellTypes.KIND_EARTH);
+	        c1.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_STONE));
+	        c1.kind = CellTypes.KIND_STONE;
+	      }
 
-	      var c2 = this.getRandCell(CellTypes.KIND_EARTH);
-	      c2.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_COAL));
-	      c2.kind = CellTypes.KIND_COAL;
+	      for (var i = 0; i < 4; i++) {
+	        var c2 = this.getRandCell(CellTypes.KIND_EARTH);
+	        c2.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_COAL));
+	        c2.kind = CellTypes.KIND_COAL;
+	      }
 
-	      var c3 = this.getRandCell(CellTypes.KIND_EARTH);
-	      c3.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_IRON));
-	      c3.kind = CellTypes.KIND_IRON;
+	      for (var i = 0; i < 20; i++) {
+	        var c3 = this.getRandCell(CellTypes.KIND_EARTH);
+	        c3.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_IRON));
+	        c3.kind = CellTypes.KIND_IRON;
+	      }
 	    }
 	  }, {
 	    key: "initGrid",
@@ -385,6 +397,7 @@
 	  }, {
 	    key: "getCell",
 	    value: function getCell(x, y) {
+	      //console.log(this.g.length, this.g[0].length)
 	      try {
 	        return this.g[y][x];
 	      } catch (e) {
@@ -437,19 +450,23 @@
 
 	var _car2 = _interopRequireDefault(_car);
 
-	var _mine = __webpack_require__(7);
+	var _mine = __webpack_require__(8);
 
 	var _mine2 = _interopRequireDefault(_mine);
+
+	var _furnace = __webpack_require__(7);
+
+	var _furnace2 = _interopRequireDefault(_furnace);
 
 	var _depot = __webpack_require__(6);
 
 	var _depot2 = _interopRequireDefault(_depot);
 
-	var _road = __webpack_require__(8);
+	var _road = __webpack_require__(9);
 
 	var _road2 = _interopRequireDefault(_road);
 
-	var _toolbelt = __webpack_require__(9);
+	var _toolbelt = __webpack_require__(10);
 
 	var _toolbelt2 = _interopRequireDefault(_toolbelt);
 
@@ -482,8 +499,14 @@
 	      this.game.load.image('stonecell', 'assets/sprites/stonecell.png');
 	      this.game.load.image('cursorvisor', 'assets/sprites/cursorvisor.png');
 	      this.game.load.image('ship', 'assets/sprites/ship.png');
+	      this.game.load.image('furnace', 'assets/sprites/furnace.png');
 	      this.game.load.image('car', 'assets/sprites/car.png');
 	      this.game.load.image('mine', 'assets/sprites/mine.png');
+	      this.game.load.image('ironicon', 'assets/sprites/ironicon.png');
+	      this.game.load.image('coalicon', 'assets/sprites/coalicon.png');
+	      this.game.load.image('stoneicon', 'assets/sprites/stoneicon.png');
+	      this.game.load.image('ironplateicon', 'assets/sprites/ironplateicon.png');
+	      this.game.load.image('stonebrickicon', 'assets/sprites/stonebrickicon.png');
 	      this.game.load.image('depot', 'assets/sprites/depot.png');
 	      this.game.load.image('road', 'assets/sprites/roadN.png');
 	      this.game.load.image('destination', 'assets/sprites/destination.png');
@@ -513,7 +536,7 @@
 	    key: 'worldToGrid',
 	    value: function worldToGrid(x, y) {
 	      return {
-	        x: Math.floor((x + this.game.camera.x) / /*- this.game.world.centerX*/ /*- this.game.world.centerY*/_constants.CELL_SIZE),
+	        x: Math.floor((x + this.game.camera.x) / _constants.CELL_SIZE),
 	        y: Math.floor((y + this.game.camera.y) / _constants.CELL_SIZE)
 	      };
 	    }
@@ -550,17 +573,17 @@
 	      this.mines = [];
 
 	      this.depots = [];
+	      this.furnaces = [];
 
 	      this.resources = {};
-	      this.resources[_grid.CellTypes.KIND_COAL] = 0;
-	      this.resources[_grid.CellTypes.KIND_IRON] = 0;
-	      this.resources[_grid.CellTypes.KIND_STONE] = 0;
+	      this.resources[_constants.Resources.IRON_PLATE] = 0;
+	      this.resources[_constants.Resources.STONE_BRICK] = 0;
 	    }
 	  }, {
 	    key: 'addResource',
-	    value: function addResource(load) {
-	      this.resources[load] = this.resources[load] + 1;
-	      console.log(load, this.resources);
+	    value: function addResource(load, n) {
+	      this.resources[load] = this.resources[load] + n;
+	      console.log(load, n, this.resources);
 	    }
 	  }, {
 	    key: 'createRoad',
@@ -588,12 +611,55 @@
 	      this.grid.addRoad(x, y, dir);
 	    }
 	  }, {
+	    key: 'hasCarAt',
+	    value: function hasCarAt(x, y) {
+	      var _iteratorNormalCompletion = true;
+	      var _didIteratorError = false;
+	      var _iteratorError = undefined;
+
+	      try {
+	        for (var _iterator = this.cars[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	          var c = _step.value;
+
+	          if (c != this) {
+	            var p = c.transitionTo || c.gridCoord();
+	            if (p.x == x && p.y == y) {
+	              return true;
+	            }
+	          }
+	        }
+	      } catch (err) {
+	        _didIteratorError = true;
+	        _iteratorError = err;
+	      } finally {
+	        try {
+	          if (!_iteratorNormalCompletion && _iterator.return) {
+	            _iterator.return();
+	          }
+	        } finally {
+	          if (_didIteratorError) {
+	            throw _iteratorError;
+	          }
+	        }
+	      }
+
+	      return false;
+	    }
+	  }, {
 	    key: 'getBuilding',
 	    value: function getBuilding(x, y) {
-	      return this.mines.concat(this.depots).filter(function (m) {
+	      return this.mines.concat(this.depots).concat(this.furnaces).filter(function (m) {
 	        //console.log("... >> getBuilding", m.gridPos)
 	        return m.gridPos.x == x && m.gridPos.y == y;
 	      })[0];
+	    }
+	  }, {
+	    key: 'createFurnace',
+	    value: function createFurnace(x, y) {
+	      this.furnaces.push(new _furnace2.default(x, y, 'furnace', this));
+
+	      var gridCoords = this.worldToGrid(x, y);
+	      this.grid.addBuilding(gridCoords.x, gridCoords.y);
 	    }
 	  }, {
 	    key: 'createDepot',
@@ -605,20 +671,17 @@
 	    }
 	  }, {
 	    key: 'createCar',
-	    value: function createCar(x, y, to, load) {
-	      to = to || null; // {x: 0, y: 0}
+	    value: function createCar(x, y, to, load, n) {
+	      to = to || null;
 	      load = load || null;
 
 	      var from = this.worldToGrid(x, y);
 
 	      this.grid.path(from, to, function (p) {
 	        if (p == null) console.log("Not path");else {
-	          var car = new _car2.default(x, y, 'car', this, load);
+	          var car = new _car2.default(x, y, 'car', this, load, n);
 	          car.setPath(p);
 	          this.cars.push(car);
-	          //console.log("Path : ")
-	          //p.map(c => console.log(c))
-	          //console.log("--------")
 	        }
 	      }.bind(this));
 	    }
@@ -640,11 +703,30 @@
 	      };
 	    }
 	  }, {
+	    key: 'findClosestFurnace',
+	    value: function findClosestFurnace(x, y, fuel) {
+	      try {
+	        return this.furnaces.map(function (d) {
+	          return { dist: Phaser.Math.distance(d.x, d.y, x, y), furnace: d };
+	        }).filter(function (e) {
+	          return e.dist > 0;
+	        }).map(function (e) {
+	          return e;
+	        }).sort(function (a, b) {
+	          if (a.dist < b.dist) return -1;else return 1;
+	        }).find(function (f) {
+	          //console.log("findingFurnace, ", f.furnace.needFuel(), f.furnace.needMatter())
+	          if (fuel) return f.furnace.needFuel();else return f.furnace.needMatter();
+	        }).furnace;
+	      } catch (e) {
+	        return null;
+	      }
+	    }
+	  }, {
 	    key: 'findClosestDepot',
 	    value: function findClosestDepot(x, y) {
 	      try {
 	        return this.depots.map(function (d) {
-	          //console.log(d, d.x, d.y, x, y)
 	          return { dist: Phaser.Math.distance(d.x, d.y, x, y), depot: d };
 	        }).filter(function (e) {
 	          return e.dist > 0;
@@ -667,6 +749,9 @@
 	      this.mines.map(function (c) {
 	        return c.update();
 	      });
+	      this.furnaces.map(function (c) {
+	        return c.update();
+	      });
 	    }
 	  }, {
 	    key: 'render',
@@ -681,9 +766,14 @@
 	        this.cursorVisor.x = cPos.x;
 	        this.cursorVisor.y = cPos.y;
 
+	        var b = this.getBuilding(cc.x, cc.y);
+	        if (b != null) {
+	          this.game.debug.text("Building: " + b.getInfo(), 600, 180);
+	        }
+
 	        this.game.debug.text("Cursor hovering : " + cc.x + ", " + cc.y + " Kind : " + cc.kind, 100, 380);
 
-	        this.game.debug.text("Resources: " + " IRON : " + this.resources[_grid.CellTypes.KIND_IRON] + " | COAL : " + this.resources[_grid.CellTypes.KIND_COAL] + " | STONE : " + this.resources[_grid.CellTypes.KIND_STONE], 100, 20);
+	        this.game.debug.text("Resources: " + " IRON PLATE : " + this.resources[_constants.Resources.IRON_PLATE] + " | STONE BRICK : " + this.resources[_constants.Resources.STONE_BRICK], 100, 20);
 
 	        this.toolbelt.render(cPos);
 	      }
@@ -722,23 +812,50 @@
 
 	var _constants = __webpack_require__(2);
 
+	var _grid = __webpack_require__(3);
+
 	var _depot = __webpack_require__(6);
 
 	var _depot2 = _interopRequireDefault(_depot);
+
+	var _furnace = __webpack_require__(7);
+
+	var _furnace2 = _interopRequireDefault(_furnace);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var Car = function () {
-	  function Car(x, y, sprite, stage, load) {
+	  function Car(x, y, sprite, stage, load, n) {
 	    _classCallCheck(this, Car);
 
 	    this.game = stage.game;
 	    this.stage = stage;
 	    this.load = load;
+	    this.number = n;
 
 	    this.sprite = game.add.sprite(x, y, sprite);
+
+	    var icon = '';
+	    switch (load) {
+	      case _grid.CellTypes.KIND_IRON:
+	        icon = 'ironicon';
+	        break;
+	      case _grid.CellTypes.KIND_STONE:
+	        icon = 'stoneicon';
+	        break;
+	      case _grid.CellTypes.KIND_COAL:
+	        icon = 'coalicon';
+	        break;
+	      case _constants.Resources.IRON_PLATE:
+	        icon = 'ironplateicon';
+	        break;
+	      case _constants.Resources.STONE_BRICK:
+	        icon = 'stonebrickicon';
+	        break;
+	    }
+	    this.iconSprite = game.add.sprite(x, y, icon);
 
 	    this.destinationSprite = game.add.sprite(x, y, 'destination');
 
@@ -788,6 +905,9 @@
 	        this.sprite.x += (transitionToWorld.x - this.sprite.x > 0 ? 1 : -1) * this.speed.x;
 
 	        this.sprite.y += (transitionToWorld.y - this.sprite.y > 0 ? 1 : -1) * this.speed.y;
+
+	        this.iconSprite.x = this.sprite.x;
+	        this.iconSprite.y = this.sprite.y;
 
 	        if (Math.round(this.sprite.x) == Math.round(transitionToWorld.x) && Math.round(this.sprite.y) == Math.round(transitionToWorld.y)) {
 	          this.transitionTo = null;
@@ -840,13 +960,16 @@
 
 	        //console.log("no path -- ", gC, c)
 
-	        if (c != null && c instanceof _depot2.default) {
-	          this.stage.addResource(this.load);
-
-	          //console.log("DESTROUUUUU")
+	        if (c != null) {
+	          if (c instanceof _depot2.default) {
+	            this.stage.addResource(this.load, this.number);
+	          } else if (c instanceof _furnace2.default) {
+	            c.add(this.load, this.number);
+	          }
 	        }
 
 	        this.sprite.destroy();
+	        this.iconSprite.destroy();
 	        return true;
 	      }
 
@@ -869,30 +992,215 @@
 	  value: true
 	});
 
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 	var _grid = __webpack_require__(3);
 
 	var _constants = __webpack_require__(2);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var Depot = function Depot(x, y, sprite, stage) {
-	  _classCallCheck(this, Depot);
+	var Depot = function () {
+	  function Depot(x, y, sprite, stage) {
+	    _classCallCheck(this, Depot);
 
-	  this.game = stage.game;
-	  this.stage = stage;
+	    this.game = stage.game;
+	    this.stage = stage;
 
-	  this.sprite = game.add.sprite(x, y, sprite);
+	    this.sprite = game.add.sprite(x, y, sprite);
 
-	  this.x = x;
-	  this.y = y;
+	    this.x = x;
+	    this.y = y;
 
-	  this.gridPos = stage.worldToGrid(x, y);
-	};
+	    this.gridPos = stage.worldToGrid(x, y);
+	  }
+
+	  _createClass(Depot, [{
+	    key: 'getInfo',
+	    value: function getInfo() {
+	      return "Depot";
+	    }
+	  }]);
+
+	  return Depot;
+	}();
 
 	exports.default = Depot;
 
 /***/ }),
 /* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _grid = __webpack_require__(3);
+
+	var _constants = __webpack_require__(2);
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Furnace = function () {
+	  function Furnace(x, y, sprite, stage) {
+	    _classCallCheck(this, Furnace);
+
+	    this.game = stage.game;
+	    this.stage = stage;
+
+	    this.sprite = game.add.sprite(x, y, sprite);
+
+	    this.x = x;
+	    this.y = y;
+
+	    this.gridPos = stage.worldToGrid(x, y);
+
+	    this.coalStorage = 0;
+	    this.ironStorage = 0;
+	    this.stoneStorage = 0;
+
+	    this.ironPlateStorage = 0;
+	    this.stoneBrickStorage = 0;
+
+	    this.maxCoalStorage = 5;
+	    this.maxMatterStorage = 20;
+	    this.maxProductStorage = 40;
+
+	    this.nowProducing = null;
+	    this.productionTime = 10000;
+	    this.productionTimer = 0;
+	  }
+
+	  _createClass(Furnace, [{
+	    key: 'matterStorage',
+	    value: function matterStorage() {
+	      return this.ironStorage + this.stoneStorage;
+	    }
+	  }, {
+	    key: 'outputStorage',
+	    value: function outputStorage() {
+	      return this.ironPlateStorage + this.stoneBrickStorage;
+	    }
+	  }, {
+	    key: 'needFuel',
+	    value: function needFuel() {
+	      return this.coalStorage < this.maxCoalStorage;
+	    }
+	  }, {
+	    key: 'needMatter',
+	    value: function needMatter() {
+	      return this.matterStorage() < this.maxMatterStorage;
+	    }
+	  }, {
+	    key: 'outputStorageFull',
+	    value: function outputStorageFull() {
+	      return this.ironPlateStorage + this.stoneBrickStorage > this.maxProductStorage;
+	    }
+	  }, {
+	    key: 'add',
+	    value: function add(kind, n) {
+	      switch (kind) {
+	        case _grid.CellTypes.KIND_COAL:
+	          this.coalStorage += n;
+	          break;
+	        case _grid.CellTypes.KIND_IRON:
+	          this.ironStorage += n;
+	          break;
+	        case _grid.CellTypes.KIND_STONE:
+	          this.stoneStorage += n;
+	          break;
+	      }
+	    }
+	  }, {
+	    key: 'work',
+	    value: function work() {
+	      if (Math.random() > 0.5) this._work(_grid.CellTypes.KIND_IRON);else this._work(_grid.CellTypes.KIND_STONE);
+	    }
+	  }, {
+	    key: '_work',
+	    value: function _work(k) {
+	      if (this.coalStorage >= 1 && !this.outputStorageFull())
+	        //console.log("_work", this)
+	        switch (k) {
+	          case _grid.CellTypes.KIND_STONE:
+	            if (this.stoneStorage >= 10) {
+	              this.nowProducing = _constants.Resources.STONE_BRICK;
+	              this.stoneStorage -= 10;
+	              this.coalStorage -= 2;
+	            }
+	            break;
+	          case _grid.CellTypes.KIND_IRON:
+	            if (this.ironStorage >= 10) {
+	              this.nowProducing = _constants.Resources.IRON_PLATE;
+	              this.ironStorage -= 10;
+	              this.coalStorage -= 2;
+	            }
+	            break;
+	        }
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update() {
+	      var t = this.game.time.elapsed;
+
+	      this.productionTimer += t;
+	      if (this.productionTimer >= this.productionTime) {
+	        this.productionTimer = 0;
+
+	        switch (this.nowProducing) {
+	          case _constants.Resources.IRON_PLATE:
+	            this.ironPlateStorage += 10;
+	            break;
+	          case _constants.Resources.STONE_BRICK:
+	            this.stoneBrickStorage += 10;
+	            break;
+	        }
+	        this.nowProducing = null;
+	      }
+	      if (this.nowProducing == null) this.work();
+	      if (this.outputStorage() > 0 && !this.stage.hasCarAt(this.gridPos)) {
+	        var d = this.stage.findClosestDepot(this.x, this.y);
+
+	        if (d != null) {
+	          this.stage.createCar(this.x, this.y, { x: d.gridPos.x, y: d.gridPos.y }, this.takeProduct(), 10);
+	        }
+	      }
+	    }
+	  }, {
+	    key: 'takeProduct',
+	    value: function takeProduct() {
+	      if (this.stoneBrickStorage == 0) return this.takeIronPlate();else if (this.ironPlateStorage == 0) return this.takeStoneBrick();else if (Math.random() > 0.5) return this.takeStoneBrick();else return this.takeIronPlate();
+	    }
+	  }, {
+	    key: 'takeStoneBrick',
+	    value: function takeStoneBrick() {
+	      this.stoneBrickStorage -= 10;
+	      return _constants.Resources.IRON_PLATE;
+	    }
+	  }, {
+	    key: 'takeIronPlate',
+	    value: function takeIronPlate() {
+	      this.ironPlateStorage -= 10;
+	      return _constants.Resources.IRON_PLATE;
+	    }
+	  }, {
+	    key: 'getInfo',
+	    value: function getInfo() {
+	      return "Furnace. Coal " + this.coalStorage + " | Iron " + this.ironStorage + " | Stone " + this.stoneStorage + " | Out Iron " + this.ironPlateStorage + " | OutStone " + this.stoneBrickStorage;
+	    }
+	  }]);
+
+	  return Furnace;
+	}();
+
+	exports.default = Furnace;
+
+/***/ }),
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -923,7 +1231,8 @@
 
 	    this.gridPos = stage.worldToGrid(x, y);
 
-	    this.product = stage.grid.getCell(this.gridPos.x, this.gridPos.y).kind;
+	    console.log(this.gridPos);
+	    this.product = stage.grid.getCell(this.gridPos.x, this.gridPos.y).kind || null;
 	    this.productionTime = (0, _constants.CellProduction)(this.product);
 	    this.productionTimer = 0;
 	  }
@@ -934,20 +1243,34 @@
 	      var t = this.game.time.elapsed;
 
 	      this.productionTimer += t;
-	      if (this.productionTimer >= this.productionTime) {
-	        console.log("Producted ! " + this.product);
-
-	        var d = this.stage.findClosestDepot(this.x, this.y);
-
+	      if (this.product != null && this.productionTimer >= this.productionTime && !this.stage.hasCarAt(this.gridPos)) {
+	        //console.log("Producted ! "+this.product)
 	        this.productionTimer = 0;
 
+	        var d = null;
+	        switch (this.product) {
+	          case _grid.CellTypes.KIND_IRON:
+	            d = this.stage.findClosestFurnace(this.x, this.y, false);
+	            break;
+	          case _grid.CellTypes.KIND_COAL:
+	            d = this.stage.findClosestFurnace(this.x, this.y, true);
+	            break;
+	          case _grid.CellTypes.KIND_STONE:
+	            d = this.stage.findClosestFurnace(this.x, this.y, false);
+	            break;
+	        }
+
 	        if (d != null) {
-	          //console.log(d)
-	          this.stage.createCar(this.x, this.y, { x: d.gridPos.x, y: d.gridPos.y }, this.product);
+	          this.stage.createCar(this.x, this.y, { x: d.gridPos.x, y: d.gridPos.y }, this.product, 10);
 	        } else {
-	          console.log("no route");
+	          console.log("no route", this.x, this.y);
 	        }
 	      }
+	    }
+	  }, {
+	    key: 'getInfo',
+	    value: function getInfo() {
+	      return "Mine of " + this.product;
 	    }
 	  }]);
 
@@ -957,7 +1280,7 @@
 	exports.default = Mine;
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -979,7 +1302,7 @@
 	exports.default = Road;
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1011,6 +1334,8 @@
 	        return _this.select('mine');
 	      } }, { key: Phaser.Keyboard.FOUR, action: function action() {
 	        return _this.select('depot');
+	      } }, { key: Phaser.Keyboard.FIVE, action: function action() {
+	        return _this.select('furnace');
 	      } }, { key: Phaser.Keyboard.R, action: this.rotateSelection }].map(function (k) {
 	      var key = _this.game.input.keyboard.addKey(k.key);
 	      key.onDown.add(k.action, _this);
@@ -1020,7 +1345,7 @@
 
 	    this.hoverSprites = {};
 
-	    var genSpritesHover = ['road', 'car', 'mine', 'depot'].map(function (s) {
+	    var genSpritesHover = ['road', 'car', 'mine', 'furnace', 'depot'].map(function (s) {
 	      var hoverSprite = this.game.add.sprite(0, 0, s);
 	      hoverSprite.alpha = 0.5;
 	      hoverSprite.visible = false;
@@ -1099,6 +1424,9 @@
 	            break;
 	          case 'depot':
 	            this.stage.createDepot(wp.x, wp.y);
+	            break;
+	          case 'furnace':
+	            this.stage.createFurnace(wp.x, wp.y);
 	            break;
 	          case 'mine':
 	            this.stage.createMine(wp.x, wp.y);

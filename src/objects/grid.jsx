@@ -93,17 +93,23 @@ class Grid {
   }
 
   putResources() {
-    var c1 = this.getRandCell(CellTypes.KIND_EARTH)
-    c1.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_STONE))
-    c1.kind = CellTypes.KIND_STONE
+    for(var i = 0; i < 10; i++) {
+      var c1 = this.getRandCell(CellTypes.KIND_EARTH)
+      c1.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_STONE))
+      c1.kind = CellTypes.KIND_STONE
+    }
 
-    var c2 = this.getRandCell(CellTypes.KIND_EARTH)
-    c2.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_COAL))
-    c2.kind = CellTypes.KIND_COAL
+    for(var i = 0; i < 4; i++) {
+      var c2 = this.getRandCell(CellTypes.KIND_EARTH)
+      c2.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_COAL))
+      c2.kind = CellTypes.KIND_COAL
+    }
 
-    var c3 = this.getRandCell(CellTypes.KIND_EARTH)
-    c3.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_IRON))
-    c3.kind = CellTypes.KIND_IRON
+    for(var i = 0; i < 20; i++) {
+      var c3 = this.getRandCell(CellTypes.KIND_EARTH)
+      c3.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_IRON))
+      c3.kind = CellTypes.KIND_IRON
+    }
   }
 
   initGrid() {
@@ -157,6 +163,7 @@ class Grid {
   }
 
   getCell(x, y) {
+    //console.log(this.g.length, this.g[0].length)
     try { return this.g[y][x] } catch (e) { return null }
   }
 
