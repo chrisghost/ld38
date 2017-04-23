@@ -1,4 +1,5 @@
 import {CELL_SIZE, Direction} from '../constants.jsx';
+import {CellTypeMinable} from '../objects/grid.jsx';
 
 class ToolBelt {
   constructor(stage) {
@@ -89,18 +90,28 @@ class ToolBelt {
       var p = this.stage.worldToGrid(this.game.input.x, this.game.input.y)
       var wp = this.stage.cellToWorld(p.x, p.y)
 
-      //console.log(this.selected.type)
+      console.log("Mouse down on grid "+p.x+","+p.y)
 
       switch(this.selected.type) {
-        case 'road' : this.stage.createRoad(p.x, p.y, this.selected.direction)
+        case 'road' :
+          this.stage.removeConstruction(p.x, p.y)
+          this.stage.createRoad(p.x, p.y, this.selected.direction)
           break;
-        case 'car' : this.stage.createCar(wp.x, wp.y)
+        case 'car' :
+          this.stage.createCar(wp.x, wp.y)
           break;
-        case 'depot' : this.stage.createDepot(wp.x, wp.y)
+        case 'depot' :
+          this.stage.removeConstruction(p.x, p.y)
+          this.stage.createDepot(p.x, p.y)
           break;
-        case 'furnace' : this.stage.createFurnace(wp.x, wp.y)
+        case 'furnace' :
+          this.stage.removeConstruction(p.x, p.y)
+          this.stage.createFurnace(p.x, p.y)
           break;
-        case 'mine' : this.stage.createMine(wp.x, wp.y)
+        case 'mine' :
+          var dest = this.stage.grid.getCell(p.x, p.y)
+          if(dest != null && CellTypeMinable(dest.kind))
+            this.stage.createMine(p.x, p.y)
           break;
         default:
       }

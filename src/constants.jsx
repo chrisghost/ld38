@@ -26,9 +26,9 @@ const Direction = {
 let CellProduction = function(t) {
 
     switch(t) {
-      case CellTypes.KIND_STONE : return 3000; break
-      case CellTypes.KIND_COAL  : return 5500; break
-      case CellTypes.KIND_IRON  : return 8000; break
+      case CellTypes.KIND_STONE : return 6000; break
+      case CellTypes.KIND_COAL  : return 3000; break
+      case CellTypes.KIND_IRON  : return 6000; break
       default : return 0;
     }
 

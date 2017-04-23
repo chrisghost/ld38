@@ -131,29 +131,44 @@ class PlayState extends Phaser.State {
       })[0]
   }
 
+  removeConstruction(x, y) {
+    var b = this.getBuilding(x, y)
+
+    if(b != null) {
+      if(b instanceof Mine) this.mines = this.mines.filter(m => m != b)
+      else if(b instanceof Depot)
+        this.depots = this.depots.filter(m => m != b)
+      else if(b instanceof Furnace)
+        this.furnaces = this.furnaces.filter(m => m != b)
+    }
+
+    this.grid.removeConstruction(x, y)
+  }
+
   createFurnace(x, y) {
     this.furnaces.push(new Furnace(x, y, 'furnace', this))
 
-    var gridCoords = this.worldToGrid(x, y)
-    this.grid.addBuilding(gridCoords.x,gridCoords.y)
+    //var gridCoords = this.worldToGrid(x, y)
+    this.grid.addBuilding(x, y)//gridCoords.x,gridCoords.y)
   }
 
   createDepot(x, y) {
     this.depots.push(new Depot(x, y, 'depot', this))
 
-    var gridCoords = this.worldToGrid(x, y)
-    this.grid.addBuilding(gridCoords.x,gridCoords.y)
+    //var gridCoords = this.worldToGrid(x, y)
+    this.grid.addBuilding(x, y)
   }
 
   createCar(x, y, to, load, n) {
     to = to || null
     load = load || null
 
-    var from = this.worldToGrid(x, y)
+    var from = {x: x, y: y} //this.worldToGrid(x, y)
 
     this.grid.path(from, to, function(p) {
-      if(p == null) console.log("Not path")
+      if(p == null) console.log("Not path ", from, to, "input was : ", x, y)
       else {
+        console.log("Create car : ", x, y)
         var car = new Car(x, y, 'car', this, load, n)
         car.setPath(p)
         this.cars.push(car)

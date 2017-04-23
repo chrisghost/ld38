@@ -6,16 +6,18 @@ class Furnace {
     this.game = stage.game
     this.stage = stage
 
+    this.wp = this.stage.cellToWorld(x, y)
+
     this.sprite = game.add.sprite(
-      x,
-      y,
+      this.wp.x,
+      this.wp.y,
       sprite
     )
 
     this.x = x
     this.y = y
 
-    this.gridPos = stage.worldToGrid(x, y)
+    this.gridPos = {x: x, y: y}
 
     this.coalStorage = 0
     this.ironStorage = 0
@@ -31,9 +33,13 @@ class Furnace {
     this.nowProducing = null
     this.productionTime = 10000
     this.productionTimer = 0
+
+    this.matterInTransit = 0
   }
 
-  matterStorage() { return this.ironStorage + this.stoneStorage }
+  addMatterInTransit(n) { this.matterInTransit += n }
+
+  matterStorage() { return this.ironStorage + this.stoneStorage + this.matterInTransit }
   outputStorage() { return this.ironPlateStorage + this.stoneBrickStorage}
 
   needFuel() { return this.coalStorage < this.maxCoalStorage }
@@ -45,9 +51,11 @@ class Furnace {
     switch (kind) {
       case CellTypes.KIND_COAL :
         this.coalStorage+=n
+        this.matterInTransit-=n
         break
       case CellTypes.KIND_IRON :
         this.ironStorage+=n
+        this.matterInTransit-=n
         break
       case CellTypes.KIND_STONE :
         this.stoneStorage+=n
@@ -120,14 +128,20 @@ class Furnace {
   }
   takeStoneBrick() {
     this.stoneBrickStorage-=10
-    return Resources.IRON_PLATE
+    return Resources.STONE_BRICK
   }
   takeIronPlate() {
     this.ironPlateStorage-=10
     return Resources.IRON_PLATE
   }
   getInfo() {
-    return "Furnace. Coal "+this.coalStorage +" | Iron "+this.ironStorage + " | Stone " + this.stoneStorage+" | Out Iron "+this.ironPlateStorage + " | OutStone " + this.stoneBrickStorage
+    return
+    "Furnace. Coal "+this.coalStorage +
+    " | Iron "+this.ironStorage +
+    " | Stone " + this.stoneStorage+
+    " | Out Iron "+this.ironPlateStorage +
+    " | OutStone " + this.stoneBrickStorage +
+    " | MatterInTransit " + this.matterInTransit
   }
 }
  export default Furnace

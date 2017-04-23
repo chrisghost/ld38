@@ -10,9 +10,11 @@ class Car {
     this.load = load
     this.number = n
 
+    this.wp = this.stage.cellToWorld(x, y)
+
     this.sprite = game.add.sprite(
-      x,
-      y,
+      this.wp.x,
+      this.wp.y,
       sprite
     )
 
@@ -35,14 +37,14 @@ class Car {
           break
     }
     this.iconSprite = game.add.sprite(
-      x,
-      y,
+      this.wp.x,
+      this.wp.y,
       icon
     )
 
     this.destinationSprite = game.add.sprite(
-      x,
-      y,
+      this.wp.x,
+      this.wp.y,
       'destination'
     )
 
@@ -51,9 +53,9 @@ class Car {
     this.path = []
     this.transitionTo = null
 
-    this.speed = {
-      x: 1.0, y: 1.0
-    }
+    this.speed = 4
+
+    this.moving = false
   }
 
   cellToWorld(x, y) {
@@ -83,21 +85,42 @@ class Car {
       //console.log(">> Transition To", this.transitionTo)
 
       var transitionToWorld = this.cellToWorld(this.transitionTo.x, this.transitionTo.y)
+      if(!this.moving) {
 
-      this.sprite.x += ((
-        (transitionToWorld.x - this.sprite.x) > 0 ? 1 : -1)
-          * this.speed.x)
+        //console.log("Creating tween => ", this.sprite.x, this.sprite.y, " To ", transitionToWorld)
+        var mvt = this.game.add.tween(this.sprite)
+            .to(transitionToWorld, 1000 / this.speed, Phaser.Easing.Linear.None, true)
+        mvt.onComplete.addOnce(function() {
+          this.moving = false
+          this.transitionTo = null
+        }, this)
+        mvt.start()
+        this.moving = true
 
-      this.sprite.y += ((
-        (transitionToWorld.y - this.sprite.y) > 0 ? 1 : -1)
-          * this.speed.y)
+        /*
+        this.sprite.x += ((
+          (transitionToWorld.x - this.sprite.x) > 0 ? 1 : -1)
+            * this.speed.x)
 
-      this.iconSprite.x = this.sprite.x
-      this.iconSprite.y = this.sprite.y
+        this.sprite.y += ((
+          (transitionToWorld.y - this.sprite.y) > 0 ? 1 : -1)
+            * this.speed.y)
+        */
 
-      if(Math.round(this.sprite.x) == Math.round(transitionToWorld.x) &&
-         Math.round(this.sprite.y) == Math.round(transitionToWorld.y)) {
-        this.transitionTo = null
+        /*
+        if(Math.round(this.sprite.x) == Math.round(transitionToWorld.x) &&
+           Math.round(this.sprite.y) == Math.round(transitionToWorld.y)) {
+          this.transitionTo = null
+        }
+        */
+      } else {
+        this.iconSprite.x = this.sprite.x
+        this.iconSprite.y = this.sprite.y
+
+        if(Math.round(this.sprite.x) == Math.round(transitionToWorld.x) &&
+           Math.round(this.sprite.y) == Math.round(transitionToWorld.y)) {
+          this.transitionTo = null
+        }
       }
 
     } else if (this.path.length > 0) {

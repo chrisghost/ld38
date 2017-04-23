@@ -10,6 +10,24 @@ const CellTypes = {
 , KIND_SHIP : 999
 }
 
+const CellTypeMinable = function(tpe) {
+  return ( tpe == CellTypes.KIND_STONE ||
+           tpe == CellTypes.KIND_IRON ||
+           tpe == CellTypes.KIND_COAL)
+}
+
+const CellTypesHuman = function(id) {
+  switch(id) {
+  case CellTypes.KIND_EARTH : return "KIND_EARTH"; break
+  case CellTypes.KIND_WATER : return "KIND_WATER"; break
+  case CellTypes.KIND_ROAD : return "KIND_ROAD"; break
+  case CellTypes.KIND_STONE : return "KIND_STONE"; break
+  case CellTypes.KIND_IRON : return "KIND_IRON"; break
+  case CellTypes.KIND_COAL : return "KIND_COAL"; break
+  case CellTypes.KIND_SHIP : return "KIND_SHIP"; break
+  }
+}
+
 class Cell {
 
   constructor(x, y, kind, stage) {
@@ -99,7 +117,7 @@ class Grid {
       c1.kind = CellTypes.KIND_STONE
     }
 
-    for(var i = 0; i < 4; i++) {
+    for(var i = 0; i < 6; i++) {
       var c2 = this.getRandCell(CellTypes.KIND_EARTH)
       c2.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_COAL))
       c2.kind = CellTypes.KIND_COAL
@@ -153,6 +171,14 @@ class Grid {
     this.initGrid()
   }
 
+  removeConstruction(x, y) {
+    this.g[y][x].kind = CellTypes.KIND_EARTH
+    this.star.setAdditionalPointCost(x, y, 0)
+    this.initGrid()
+    this.star.setDirectionalCondition(x, y,
+      [EasyStar.BOTTOM, EasyStar.LEFT, EasyStar.TOP, EasyStar.RIGHT])
+  }
+
   walkables() {
     return [CellTypes.KIND_ROAD, CellTypes.KIND_DEPOT]
   }
@@ -186,4 +212,4 @@ class Grid {
   }
 }
 
-export {Grid, CellTypes};
+export {Grid, CellTypes, CellTypesHuman, CellTypeMinable};

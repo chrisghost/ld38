@@ -1,4 +1,4 @@
-import {CellTypes} from '../objects/grid.jsx';
+import {CellTypes, CellTypesHuman} from '../objects/grid.jsx';
 import {CellProduction, Resources} from '../constants.jsx';
 
 class Mine {
@@ -6,16 +6,19 @@ class Mine {
     this.game = stage.game
     this.stage = stage
 
+    this.wp = this.stage.cellToWorld(x, y)
+
     this.sprite = game.add.sprite(
-      x,
-      y,
+      this.wp.x,
+      this.wp.y,
       sprite
     )
 
     this.x = x
     this.y = y
 
-    this.gridPos = stage.worldToGrid(x, y)
+    this.gridPos = {x: x, y: y}
+    console.log("Buildin mine at : ", this.gridPos)
 
     console.log(this.gridPos)
     this.product = stage.grid.getCell(this.gridPos.x, this.gridPos.y).kind || null
@@ -45,9 +48,12 @@ class Mine {
       }
 
       if(d != null) {
+        d.addMatterInTransit(10)
         this.stage.createCar(this.x, this.y, {x: d.gridPos.x, y: d.gridPos.y}, this.product, 10)
       } else {
-        console.log("no route", this.x, this.y)
+        console.log(
+          "no route for mine producing "+CellTypesHuman(this.product)
+          + ", mine located at : "+this.x+","+ this.y)
       }
     }
   }
