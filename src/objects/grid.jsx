@@ -1,4 +1,4 @@
-import {CELL_SIZE, Direction} from '../constants.jsx';
+import {Resources, CELL_SIZE, Direction, WORLD_CELL_X, WORLD_CELL_Y } from '../constants.jsx';
 
 const CellTypes = {
   KIND_EARTH : 0
@@ -36,7 +36,7 @@ class Cell {
     this.kind = kind;
 
     var p = stage.cellToWorld(x, y)
-    this.sprite = stage.game.add.sprite( p.x, p.y, stage.cellSpriteName(kind))
+    this.sprite = stage.spritesGroups.map.create( p.x, p.y, stage.cellSpriteName(kind))
   }
 
   print() {
@@ -52,12 +52,14 @@ class Grid {
     this.g = [];
 
     this.stage = stage
+  }
 
+  init() {
     var waterTiles = 0
 
-    for (var y = 0; y < h; y++) {
+    for (var y = 0; y < this.h; y++) {
       this.g.push([])
-      for (var x = 0; x < w; x++) {
+      for (var x = 0; x < this.w; x++) {
 
         var hasOnlyEarthNeighbours =
           this.neighbours(x, y).reduceRight(
@@ -77,10 +79,10 @@ class Grid {
       }
     }
 
+    this.star = new EasyStar.js()
+
     this.putResources()
     this.putShip()
-
-    this.star = new EasyStar.js()
 
     this.initGrid()
 
@@ -89,16 +91,17 @@ class Grid {
 
   putShip() {
 
-    var shipC = this.getRandCell(CellTypes.KIND_EARTH)
+    var shipC = this.getRandCellNoNeighbours(CellTypes.KIND_EARTH, CellTypes.KIND_EARTH)
 
-    if(this.neighbours(shipC.x, shipC.y).reduceRight(
-      function(acc, c) {
-        return acc && c.kind == CellTypes.KIND_EARTH}, true)) {
-      shipC.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_SHIP))
-      shipC.kind = CellTypes.KIND_SHIP
-    } else
-      this.putShip()
+    shipC.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_SHIP))
+    shipC.kind = CellTypes.KIND_SHIP
 
+    var storageC = this.getRandCellNoNeighbours(CellTypes.KIND_EARTH, CellTypes.KIND_EARTH)
+
+    var d = this.stage.createDepot(storageC.x, storageC.y)
+
+    d.addResource(Resources.IRON_PLATE, 100)
+    d.addResource(Resources.STONE_BRICK, 100)
   }
 
   neighbours(x, y) {
@@ -138,6 +141,17 @@ class Grid {
 
   initGrid() {
     this.star.setGrid(this.g.map(c => c.map(cell => { return cell.kind })))
+  }
+
+  getRandCellNoNeighbours(kind, noNeighboursKind) {
+    var cell = this.getRandCell(CellTypes.KIND_EARTH)
+
+    if(this.neighbours(cell.x, cell.y).reduceRight(
+      function(acc, c) {
+        return acc && c.kind == noNeighboursKind}, true)) {
+      return cell
+    } else
+      return this.getRandCellNoNeighbours(kind, noNeighboursKind)
   }
 
   getRandCell(kind) {

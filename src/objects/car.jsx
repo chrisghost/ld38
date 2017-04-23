@@ -12,7 +12,7 @@ class Car {
 
     this.wp = this.stage.cellToWorld(x, y)
 
-    this.sprite = game.add.sprite(
+    this.sprite = this.stage.spritesGroups.cars.create(
       this.wp.x,
       this.wp.y,
       sprite
@@ -36,13 +36,14 @@ class Car {
         icon = 'stonebrickicon'
           break
     }
-    this.iconSprite = game.add.sprite(
+
+    this.iconSprite = this.stage.spritesGroups.cars.create(
       this.wp.x,
       this.wp.y,
       icon
     )
 
-    this.destinationSprite = game.add.sprite(
+    this.destinationSprite = this.stage.spritesGroups.cars.create(
       this.wp.x,
       this.wp.y,
       'destination'

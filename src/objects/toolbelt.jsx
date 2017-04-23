@@ -35,12 +35,12 @@ class ToolBelt {
       'furnace',
       'depot'
     ].map(function(s) {
-      var hoverSprite = this.game.add.sprite(0, 0, s)
+      var hoverSprite = this.stage.spritesGroups.buildings.create(0, 0, s)
       hoverSprite.alpha = 0.5
       hoverSprite.visible = false
       hoverSprite.anchor.setTo(0.5, 0.5)
 
-      console.log( this.hoverSprites )
+      //console.log( this.hoverSprites )
       this.hoverSprites[s] = hoverSprite
     }.bind(this))
 
@@ -97,7 +97,7 @@ class ToolBelt {
       var p = this.stage.worldToGrid(this.game.input.x, this.game.input.y)
       var wp = this.stage.cellToWorld(p.x, p.y)
 
-      console.log("Mouse down on grid "+p.x+","+p.y)
+      //console.log("Mouse down on grid "+p.x+","+p.y)
 
       switch(this.selected.type) {
         case 'road1' :

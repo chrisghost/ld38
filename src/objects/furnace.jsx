@@ -8,7 +8,7 @@ class Furnace {
 
     this.wp = this.stage.cellToWorld(x, y)
 
-    this.sprite = game.add.sprite(
+    this.sprite = this.stage.spritesGroups.buildings.create(
       this.wp.x,
       this.wp.y,
       sprite

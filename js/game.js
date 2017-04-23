@@ -259,7 +259,7 @@
 	    this.kind = kind;
 
 	    var p = stage.cellToWorld(x, y);
-	    this.sprite = stage.game.add.sprite(p.x, p.y, stage.cellSpriteName(kind));
+	    this.sprite = stage.spritesGroups.map.create(p.x, p.y, stage.cellSpriteName(kind));
 	  }
 
 	  _createClass(Cell, [{
@@ -282,47 +282,53 @@
 	    this.g = [];
 
 	    this.stage = stage;
-
-	    var waterTiles = 0;
-
-	    for (var y = 0; y < h; y++) {
-	      this.g.push([]);
-	      for (var x = 0; x < w; x++) {
-
-	        var hasOnlyEarthNeighbours = this.neighbours(x, y).reduceRight(function (acc, c) {
-	          return acc && c.kind == CellTypes.KIND_EARTH;
-	        }, true);
-
-	        var c = new Cell(x, y, hasOnlyEarthNeighbours && waterTiles < 6 && Math.random() < 0.3 ? CellTypes.KIND_WATER : CellTypes.KIND_EARTH, this.stage);
-
-	        this.g[y].push(c);
-
-	        if (c.kind == CellTypes.KIND_WATER) waterTiles++;
-	      }
-	    }
-
-	    this.putResources();
-	    this.putShip();
-
-	    this.star = new EasyStar.js();
-
-	    this.initGrid();
-
-	    this.star.setAcceptableTiles(this.walkables());
 	  }
 
 	  _createClass(Grid, [{
+	    key: "init",
+	    value: function init() {
+	      var waterTiles = 0;
+
+	      for (var y = 0; y < this.h; y++) {
+	        this.g.push([]);
+	        for (var x = 0; x < this.w; x++) {
+
+	          var hasOnlyEarthNeighbours = this.neighbours(x, y).reduceRight(function (acc, c) {
+	            return acc && c.kind == CellTypes.KIND_EARTH;
+	          }, true);
+
+	          var c = new Cell(x, y, hasOnlyEarthNeighbours && waterTiles < 6 && Math.random() < 0.3 ? CellTypes.KIND_WATER : CellTypes.KIND_EARTH, this.stage);
+
+	          this.g[y].push(c);
+
+	          if (c.kind == CellTypes.KIND_WATER) waterTiles++;
+	        }
+	      }
+
+	      this.star = new EasyStar.js();
+
+	      this.putResources();
+	      this.putShip();
+
+	      this.initGrid();
+
+	      this.star.setAcceptableTiles(this.walkables());
+	    }
+	  }, {
 	    key: "putShip",
 	    value: function putShip() {
 
-	      var shipC = this.getRandCell(CellTypes.KIND_EARTH);
+	      var shipC = this.getRandCellNoNeighbours(CellTypes.KIND_EARTH, CellTypes.KIND_EARTH);
 
-	      if (this.neighbours(shipC.x, shipC.y).reduceRight(function (acc, c) {
-	        return acc && c.kind == CellTypes.KIND_EARTH;
-	      }, true)) {
-	        shipC.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_SHIP));
-	        shipC.kind = CellTypes.KIND_SHIP;
-	      } else this.putShip();
+	      shipC.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_SHIP));
+	      shipC.kind = CellTypes.KIND_SHIP;
+
+	      var storageC = this.getRandCellNoNeighbours(CellTypes.KIND_EARTH, CellTypes.KIND_EARTH);
+
+	      var d = this.stage.createDepot(storageC.x, storageC.y);
+
+	      d.addResource(_constants.Resources.IRON_PLATE, 100);
+	      d.addResource(_constants.Resources.STONE_BRICK, 100);
 	    }
 	  }, {
 	    key: "neighbours",
@@ -370,6 +376,17 @@
 	          return cell.kind;
 	        });
 	      }));
+	    }
+	  }, {
+	    key: "getRandCellNoNeighbours",
+	    value: function getRandCellNoNeighbours(kind, noNeighboursKind) {
+	      var cell = this.getRandCell(CellTypes.KIND_EARTH);
+
+	      if (this.neighbours(cell.x, cell.y).reduceRight(function (acc, c) {
+	        return acc && c.kind == noNeighboursKind;
+	      }, true)) {
+	        return cell;
+	      } else return this.getRandCellNoNeighbours(kind, noNeighboursKind);
 	    }
 	  }, {
 	    key: "getRandCell",
@@ -594,15 +611,17 @@
 	  }, {
 	    key: 'create',
 	    value: function create() {
-	      this.grid = new _grid.Grid(_constants.WORLD_CELL_X, _constants.WORLD_CELL_Y, this);
-	      //this.grid.printGrid()
+	      this.game.camera.x = 0;
+	      this.game.camera.y = 0;
 
-	      this.game.camera.x = 0; //this.game.world.centerX
-	      this.game.camera.y = 0; //this.game.world.centerY
+	      this.spritesGroups = {};
 
-	      //this.worldScale = 1.0
+	      this.spritesGroups.map = this.game.add.group();
+	      this.spritesGroups.buildings = this.game.add.group();
+	      this.spritesGroups.cars = this.game.add.group();
+	      this.spritesGroups.hover = this.game.add.group();
 
-	      this.cursorVisor = this.game.add.sprite(0, 0, 'cursorvisor');
+	      this.cursorVisor = this.spritesGroups.hover.create(0, 0, 'cursorvisor');
 
 	      this.game.input.mouse.capture = true;
 
@@ -616,8 +635,13 @@
 	      this.depots = [];
 	      this.furnaces = [];
 
-	      this.initResources();
 	      this.resourcesTimerUpdate = 0;
+
+	      this.grid = new _grid.Grid(_constants.WORLD_CELL_X, _constants.WORLD_CELL_Y, this);
+
+	      this.grid.init();
+
+	      this.initResources();
 	    }
 	  }, {
 	    key: 'initResources',
@@ -632,7 +656,7 @@
 	      console.log("create Road");
 	      var wp = this.cellToWorld(x, y);
 
-	      var s = this.game.add.sprite(wp.x + _constants.CELL_SIZE / 2, wp.y + _constants.CELL_SIZE / 2, sprite);
+	      var s = this.spritesGroups.buildings.create(wp.x + _constants.CELL_SIZE / 2, wp.y + _constants.CELL_SIZE / 2, sprite);
 	      s.anchor.setTo(0.5, 0.5);
 
 	      switch (dir) {
@@ -726,6 +750,8 @@
 
 	      //var gridCoords = this.worldToGrid(x, y)
 	      this.grid.addBuilding(x, y);
+
+	      return this.depots[this.depots.length - 1];
 	    }
 	  }, {
 	    key: 'createCar',
@@ -915,7 +941,7 @@
 
 	    this.wp = this.stage.cellToWorld(x, y);
 
-	    this.sprite = game.add.sprite(this.wp.x, this.wp.y, sprite);
+	    this.sprite = this.stage.spritesGroups.cars.create(this.wp.x, this.wp.y, sprite);
 
 	    var icon = '';
 	    switch (load) {
@@ -935,9 +961,10 @@
 	        icon = 'stonebrickicon';
 	        break;
 	    }
-	    this.iconSprite = game.add.sprite(this.wp.x, this.wp.y, icon);
 
-	    this.destinationSprite = game.add.sprite(this.wp.x, this.wp.y, 'destination');
+	    this.iconSprite = this.stage.spritesGroups.cars.create(this.wp.x, this.wp.y, icon);
+
+	    this.destinationSprite = this.stage.spritesGroups.cars.create(this.wp.x, this.wp.y, 'destination');
 
 	    this.destinationSprite.visible = false;
 
@@ -1101,7 +1128,7 @@
 
 	    this.wp = this.stage.cellToWorld(x, y);
 
-	    this.sprite = game.add.sprite(this.wp.x, this.wp.y, sprite);
+	    this.sprite = this.stage.spritesGroups.buildings.create(this.wp.x, this.wp.y, sprite);
 
 	    this.x = x;
 	    this.y = y;
@@ -1158,7 +1185,7 @@
 
 	    this.wp = this.stage.cellToWorld(x, y);
 
-	    this.sprite = game.add.sprite(this.wp.x, this.wp.y, sprite);
+	    this.sprite = this.stage.spritesGroups.buildings.create(this.wp.x, this.wp.y, sprite);
 
 	    this.x = x;
 	    this.y = y;
@@ -1341,7 +1368,7 @@
 
 	    this.wp = this.stage.cellToWorld(x, y);
 
-	    this.sprite = game.add.sprite(this.wp.x, this.wp.y, sprite);
+	    this.sprite = this.stage.spritesGroups.buildings.create(this.wp.x, this.wp.y, sprite);
 
 	    this.x = x;
 	    this.y = y;
@@ -1415,7 +1442,7 @@
 	var Road = function Road(x, y, direction) {
 	  _classCallCheck(this, Road);
 
-	  this.sprite = game.add.sprite(x, y, _constants.Direction.toSprite(direction));
+	  this.sprite = stage.game.add.sprite(x, y, _constants.Direction.toSprite(direction));
 	};
 
 	exports.default = Road;
@@ -1469,12 +1496,12 @@
 	    this.hoverSprites = {};
 
 	    var genSpritesHover = ['road1', 'road2', 'road3', 'car', 'mine', 'furnace', 'depot'].map(function (s) {
-	      var hoverSprite = this.game.add.sprite(0, 0, s);
+	      var hoverSprite = this.stage.spritesGroups.buildings.create(0, 0, s);
 	      hoverSprite.alpha = 0.5;
 	      hoverSprite.visible = false;
 	      hoverSprite.anchor.setTo(0.5, 0.5);
 
-	      console.log(this.hoverSprites);
+	      //console.log( this.hoverSprites )
 	      this.hoverSprites[s] = hoverSprite;
 	    }.bind(this));
 
@@ -1541,7 +1568,7 @@
 	        var p = this.stage.worldToGrid(this.game.input.x, this.game.input.y);
 	        var wp = this.stage.cellToWorld(p.x, p.y);
 
-	        console.log("Mouse down on grid " + p.x + "," + p.y);
+	        //console.log("Mouse down on grid "+p.x+","+p.y)
 
 	        switch (this.selected.type) {
 	          case 'road1':

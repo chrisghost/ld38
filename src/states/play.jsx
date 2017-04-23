@@ -61,15 +61,18 @@ class PlayState extends Phaser.State {
   }
 
   create() {
-    this.grid = new Grid(WORLD_CELL_X, WORLD_CELL_Y, this)
-    //this.grid.printGrid()
+    this.game.camera.x = 0
+    this.game.camera.y = 0
 
-    this.game.camera.x = 0 //this.game.world.centerX
-    this.game.camera.y = 0 //this.game.world.centerY
+    this.spritesGroups = {}
 
-    //this.worldScale = 1.0
+    this.spritesGroups.map = this.game.add.group()
+    this.spritesGroups.buildings = this.game.add.group()
+    this.spritesGroups.cars = this.game.add.group()
+    this.spritesGroups.hover = this.game.add.group()
 
-    this.cursorVisor = this.game.add.sprite(0,0,'cursorvisor')
+
+    this.cursorVisor = this.spritesGroups.hover.create(0,0,'cursorvisor')
 
     this.game.input.mouse.capture = true;
 
@@ -83,8 +86,13 @@ class PlayState extends Phaser.State {
     this.depots = []
     this.furnaces = []
 
-    this.initResources()
     this.resourcesTimerUpdate = 0
+
+    this.grid = new Grid(WORLD_CELL_X, WORLD_CELL_Y, this)
+
+    this.grid.init()
+
+    this.initResources()
   }
 
   initResources() {
@@ -97,7 +105,7 @@ class PlayState extends Phaser.State {
     console.log("create Road")
     var wp = this.cellToWorld(x, y)
 
-    var s = this.game.add.sprite(wp.x + CELL_SIZE / 2, wp.y + CELL_SIZE / 2, sprite)
+    var s = this.spritesGroups.buildings.create(wp.x + CELL_SIZE / 2, wp.y + CELL_SIZE / 2, sprite)
     s.anchor.setTo(0.5, 0.5)
 
     switch(dir) {
@@ -159,6 +167,8 @@ class PlayState extends Phaser.State {
 
     //var gridCoords = this.worldToGrid(x, y)
     this.grid.addBuilding(x, y)
+
+    return this.depots[this.depots.length - 1]
   }
 
   createCar(x, y, to, load, n) {
