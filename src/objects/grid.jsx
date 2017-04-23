@@ -141,8 +141,14 @@ class Grid {
     )
   }
 
+  addBuilding(x, y) {
+    this.g[y][x].kind = CellTypes.KIND_ROAD
+    this.star.setAdditionalPointCost(x, y, 99999)
+    this.initGrid()
+  }
+
   walkables() {
-    return [CellTypes.KIND_ROAD]
+    return [CellTypes.KIND_ROAD, CellTypes.KIND_DEPOT]
   }
 
   path(from, to, callback) {

@@ -1,9 +1,11 @@
 import {CELL_SIZE} from '../constants.jsx';
+import Depot from '../objects/depot.jsx';
 
 class Car {
-  constructor(x, y, sprite, stage) {
+  constructor(x, y, sprite, stage, load) {
     this.game = stage.game
     this.stage = stage
+    this.load = load
 
     this.sprite = game.add.sprite(
       x,
@@ -51,16 +53,9 @@ class Car {
 
   update(cars) {
     if(this.transitionTo != null) {
-      //var p = this.gridCoord()
-
-      //console.log("update ", this.transitionTo, p, (this.transitionTo.x - p.x) + ", "+ (this.transitionTo.y - p.y))
+      //console.log(">> Transition To", this.transitionTo)
 
       var transitionToWorld = this.cellToWorld(this.transitionTo.x, this.transitionTo.y)
-
-      //console.log( Math.round(transitionToWorld.x) == Math.round(this.sprite.x), Math.round(transitionToWorld.y) == Math.round(this.sprite.y))
-
-
-      //console.log((this.sprite.x +"-"+ transitionToWorld.x) + ", "+(this.sprite.y +"-"+ transitionToWorld.y))
 
       this.sprite.x += ((
         (transitionToWorld.x - this.sprite.x) > 0 ? 1 : -1)
@@ -70,14 +65,6 @@ class Car {
         (transitionToWorld.y - this.sprite.y) > 0 ? 1 : -1)
           * this.speed.y)
 
-      //p = this.gridCoord()
-      //var toWorld = this.cellToWorld(p.x, p.y)
-
-      //console.log( Math.round(toWorld.x) + " == " + Math.round(this.sprite.x) + " && " + Math.round(toWorld.y) +" == "+Math.round(this.sprite.y))
-
-      //if(Math.round(toWorld.x) == Math.round(this.sprite.x) &&
-         //Math.round(toWorld.y) == Math.round(this.sprite.y)) {
-
       if(Math.round(this.sprite.x) == Math.round(transitionToWorld.x) &&
          Math.round(this.sprite.y) == Math.round(transitionToWorld.y)) {
         this.transitionTo = null
@@ -85,6 +72,7 @@ class Car {
 
     } else if (this.path.length > 0) {
       var dest = this.path[0]
+      //console.log("go to next")
 
       var canGo = true
       for(let c of cars) {
@@ -98,10 +86,29 @@ class Car {
       }
 
       if(canGo) this.transitionTo = this.path.shift()
+      //else console.log("I can't gooo :(")
+
+      //console.log("transit == ", this.transitionTo)
 
     } else if (this.path.length == 0) {
       this.destinationSprite.visible = false
+
+      var gC = this.gridCoord()
+      var c = this.stage.getBuilding(gC.x, gC.y)
+
+        //console.log("no path -- ", gC, c)
+
+      if(c != null && c instanceof Depot) {
+        this.stage.addResource(this.load)
+
+      //console.log("DESTROUUUUU")
+      }
+
+      this.sprite.destroy()
+      return true
     }
+
+    return false
   }
 }
 

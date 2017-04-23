@@ -5,32 +5,40 @@ class ToolBelt {
     this.game = stage.game
     this.stage = stage
 
-    var keyEsc = this.game.input.keyboard.addKey(Phaser.Keyboard.ESC)
-    keyEsc.onDown.add(this.unselect, this)
+    var keys = [
 
-    var key1 = this.game.input.keyboard.addKey(Phaser.Keyboard.ONE)
-    key1.onDown.add(this.selectRoad, this)
+      {key: Phaser.Keyboard.ESC, action: this.unselect}
+    , {key: Phaser.Keyboard.ONE, action: (() => this.select('road'))}
+    , {key: Phaser.Keyboard.TWO, action: (() => this.select('car'))}
+    , {key: Phaser.Keyboard.THREE, action: (() => this.select('mine'))}
+    , {key: Phaser.Keyboard.FOUR, action: (() => this.select('depot'))}
+    , {key: Phaser.Keyboard.R, action: this.rotateSelection}
 
-    var key2 = this.game.input.keyboard.addKey(Phaser.Keyboard.TWO)
-    key2.onDown.add(this.selectCar, this)
-
-    var keyR = this.game.input.keyboard.addKey(Phaser.Keyboard.R)
-    keyR.onDown.add(this.rotateSelection, this)
+    ].map(k => {
+      var key = this.game.input.keyboard.addKey(k.key)
+      key.onDown.add(k.action, this)
+    })
 
     this.selected = null
 
-    this.roadHover = this.game.add.sprite(0, 0, 'road')
-    this.roadHover.alpha = 0.5
-    this.roadHover.visible = false
-    this.roadHover.anchor.setTo(0.5, 0.5)
+    this.hoverSprites = {}
 
-    this.carHover = this.game.add.sprite(0, 0, 'car')
-    this.carHover.alpha = 0.5
-    this.carHover.visible = false
-    this.carHover.anchor.setTo(0.5, 0.5)
+    var genSpritesHover = [
+      'road',
+      'car',
+      'mine',
+      'depot'
+    ].map(function(s) {
+      var hoverSprite = this.game.add.sprite(0, 0, s)
+      hoverSprite.alpha = 0.5
+      hoverSprite.visible = false
+      hoverSprite.anchor.setTo(0.5, 0.5)
 
+      console.log( this.hoverSprites )
+      this.hoverSprites[s] = hoverSprite
+    }.bind(this))
 
-    console.log("Toolbelt up")
+    console.log("Toolbelt up", this.hoverSprites)
   }
 
   unselect() {
@@ -39,6 +47,8 @@ class ToolBelt {
   }
 
   rotateSelection() {
+    if(this.selected == null) return;
+
     this.selected.direction = (this.selected.direction + 1) % 4
 
     switch(this.selected.direction) {
@@ -53,18 +63,15 @@ class ToolBelt {
 
   }
 
-  selectCar() {
+  select(s) {
     if(this.selected != null) this.selected.sprite.visible = false
-    this.selected = { sprite: this.carHover, type: 'car', direction: Direction.N }
+    this.selected = {
+      sprite: this.hoverSprites[s],
+      type: s,
+      direction: Direction.N
+    }
     this.selected.sprite.visible = true
-  }
-
-  selectRoad() {
-    console.log("select road")
-    if(this.selected != null) this.selected.sprite.visible = false
-    this.selected = { sprite: this.roadHover, type: 'road', direction: Direction.N }
     this.selected.sprite.angle = 0
-    this.selected.sprite.visible = true
   }
 
   render(cursorGridPos) {
@@ -77,14 +84,19 @@ class ToolBelt {
 
   onMouseDown() {
     if(this.selected != null) {
-      var p = this.stage.cursorToGrid(this.game.input.x, this.game.input.y)
+      var p = this.stage.worldToGrid(this.game.input.x, this.game.input.y)
       var wp = this.stage.cellToWorld(p.x, p.y)
 
-      console.log(this.selected.type)
+      //console.log(this.selected.type)
+
       switch(this.selected.type) {
         case 'road' : this.stage.createRoad(p.x, p.y, this.selected.direction)
           break;
         case 'car' : this.stage.createCar(wp.x, wp.y)
+          break;
+        case 'depot' : this.stage.createDepot(wp.x, wp.y)
+          break;
+        case 'mine' : this.stage.createMine(wp.x, wp.y)
           break;
         default:
       }

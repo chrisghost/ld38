@@ -1,3 +1,5 @@
+import {CellTypes} from './objects/grid.jsx';
+
 const CELL_SIZE = 64
 
 const WORLD_CELL_X = 10
@@ -16,4 +18,15 @@ const Direction = {
   }
 }
 
-export {CELL_SIZE, Direction, WORLD_CELL_X, WORLD_CELL_Y, WORLD_W, WORLD_H};
+let CellProduction = function(t) {
+
+    switch(t) {
+      case CellTypes.KIND_STONE : return 1000; break
+      case CellTypes.KIND_COAL  : return 1500; break
+      case CellTypes.KIND_IRON  : return 2000; break
+      default : return 0;
+    }
+
+}
+
+export {CELL_SIZE, Direction, WORLD_CELL_X, WORLD_CELL_Y, WORLD_W, WORLD_H, CellProduction};
