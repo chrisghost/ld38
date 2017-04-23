@@ -9,11 +9,12 @@ class ToolBelt {
     var keys = [
 
       {key: Phaser.Keyboard.ESC, action: this.unselect}
-    , {key: Phaser.Keyboard.ONE, action: (() => this.select('road'))}
-    , {key: Phaser.Keyboard.TWO, action: (() => this.select('car'))}
-    , {key: Phaser.Keyboard.THREE, action: (() => this.select('mine'))}
-    , {key: Phaser.Keyboard.FOUR, action: (() => this.select('depot'))}
-    , {key: Phaser.Keyboard.FIVE, action: (() => this.select('furnace'))}
+    , {key: Phaser.Keyboard.ONE, action: (() => this.select('road1'))}
+    , {key: Phaser.Keyboard.TWO, action: (() => this.select('road2'))}
+    , {key: Phaser.Keyboard.THREE, action: (() => this.select('road3'))}
+    , {key: Phaser.Keyboard.FOUR, action: (() => this.select('mine'))}
+    , {key: Phaser.Keyboard.FIVE, action: (() => this.select('depot'))}
+    , {key: Phaser.Keyboard.SIX, action: (() => this.select('furnace'))}
     , {key: Phaser.Keyboard.R, action: this.rotateSelection}
 
     ].map(k => {
@@ -26,7 +27,9 @@ class ToolBelt {
     this.hoverSprites = {}
 
     var genSpritesHover = [
-      'road',
+      'road1',
+      'road2',
+      'road3',
       'car',
       'mine',
       'furnace',
@@ -66,10 +69,14 @@ class ToolBelt {
 
   }
 
+  getHoverSprite(s) {
+    return this.hoverSprites[s]
+  }
+
   select(s) {
     if(this.selected != null) this.selected.sprite.visible = false
     this.selected = {
-      sprite: this.hoverSprites[s],
+      sprite: this.getHoverSprite(s),
       type: s,
       direction: Direction.N
     }
@@ -93,9 +100,17 @@ class ToolBelt {
       console.log("Mouse down on grid "+p.x+","+p.y)
 
       switch(this.selected.type) {
-        case 'road' :
+        case 'road1' :
+        case 'road2' :
+        case 'road3' :
           this.stage.removeConstruction(p.x, p.y)
-          this.stage.createRoad(p.x, p.y, this.selected.direction)
+          var spd = 1
+          switch(this.selected.type) {
+              case 'road1' : spd = 1; break
+              case 'road2' : spd = 2; break
+              case 'road3' : spd = 6; break
+            }
+          this.stage.createRoad(p.x, p.y, this.selected.direction, spd, this.selected.type)
           break;
         case 'car' :
           this.stage.createCar(wp.x, wp.y)

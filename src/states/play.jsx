@@ -25,7 +25,9 @@ class PlayState extends Phaser.State {
     this.game.load.image('ironplateicon', 'assets/sprites/ironplateicon.png');
     this.game.load.image('stonebrickicon', 'assets/sprites/stonebrickicon.png');
     this.game.load.image('depot', 'assets/sprites/depot.png');
-    this.game.load.image('road', 'assets/sprites/roadN.png');
+    this.game.load.image('road1', 'assets/sprites/road1.png');
+    this.game.load.image('road2', 'assets/sprites/road2.png');
+    this.game.load.image('road3', 'assets/sprites/road3.png');
     this.game.load.image('destination', 'assets/sprites/destination.png');
     this.cursors = this.game.input.keyboard.createCursorKeys();
   }
@@ -91,11 +93,11 @@ class PlayState extends Phaser.State {
     console.log(load, n, this.resources)
   }
 
-  createRoad(x, y, dir) {
+  createRoad(x, y, dir, speed, sprite) {
     console.log("create Road")
     var wp = this.cellToWorld(x, y)
 
-    var s = this.game.add.sprite(wp.x + CELL_SIZE / 2, wp.y + CELL_SIZE / 2, 'road')
+    var s = this.game.add.sprite(wp.x + CELL_SIZE / 2, wp.y + CELL_SIZE / 2, sprite)
     s.anchor.setTo(0.5, 0.5)
 
     switch(dir) {
@@ -108,7 +110,7 @@ class PlayState extends Phaser.State {
       default : s.angle = 0
     }
 
-    this.grid.addRoad(x, y, dir)
+    this.grid.addRoad(x, y, dir, speed)
   }
 
   hasCarAt(x, y) {

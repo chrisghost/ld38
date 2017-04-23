@@ -130,6 +130,12 @@ class Grid {
     }
   }
 
+  getRoadSpeed(x, y) {
+    var spd = this.getCell(x, y).roadSpeed
+    if(spd == null) return 0.5
+    else return spd
+  }
+
   initGrid() {
     this.star.setGrid(this.g.map(c => c.map(cell => { return cell.kind })))
   }
@@ -156,8 +162,8 @@ class Grid {
     }
   }
 
-  addRoad(x, y, dir) {
-    this.g[y][x] = {x:x, y:y, dir: dir, kind: CellTypes.KIND_ROAD}
+  addRoad(x, y, dir, speed) {
+    this.g[y][x] = {x:x, y:y, dir: dir, kind: CellTypes.KIND_ROAD, roadSpeed: speed}
     this.initGrid()
     this.star.setDirectionalCondition(x, y,
       [EasyStar.BOTTOM, EasyStar.LEFT, EasyStar.TOP, EasyStar.RIGHT]

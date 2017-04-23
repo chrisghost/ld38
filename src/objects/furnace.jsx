@@ -135,13 +135,12 @@ class Furnace {
     return Resources.IRON_PLATE
   }
   getInfo() {
-    return
-    "Furnace. Coal "+this.coalStorage +
-    " | Iron "+this.ironStorage +
-    " | Stone " + this.stoneStorage+
-    " | Out Iron "+this.ironPlateStorage +
-    " | OutStone " + this.stoneBrickStorage +
-    " | MatterInTransit " + this.matterInTransit
+    return "Furnace. Coal "+this.coalStorage
+     + " | Iron "+this.ironStorage
+     + " | Stone " + this.stoneStorag
+     + " | Out Iron "+this.ironPlateStorage
+     + " | OutStone " + this.stoneBrickStorage
+     + " | MatterInTransit " + this.matterInTransit
   }
 }
  export default Furnace

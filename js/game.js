@@ -357,6 +357,12 @@
 	      }
 	    }
 	  }, {
+	    key: "getRoadSpeed",
+	    value: function getRoadSpeed(x, y) {
+	      var spd = this.getCell(x, y).roadSpeed;
+	      if (spd == null) return 0.5;else return spd;
+	    }
+	  }, {
 	    key: "initGrid",
 	    value: function initGrid() {
 	      this.star.setGrid(this.g.map(function (c) {
@@ -390,10 +396,10 @@
 	    }
 	  }, {
 	    key: "addRoad",
-	    value: function addRoad(x, y, dir) {
+	    value: function addRoad(x, y, dir, speed) {
 	      var _this2 = this;
 
-	      this.g[y][x] = { x: x, y: y, dir: dir, kind: CellTypes.KIND_ROAD };
+	      this.g[y][x] = { x: x, y: y, dir: dir, kind: CellTypes.KIND_ROAD, roadSpeed: speed };
 	      this.initGrid();
 	      this.star.setDirectionalCondition(x, y, [EasyStar.BOTTOM, EasyStar.LEFT, EasyStar.TOP, EasyStar.RIGHT].filter(function (d) {
 	        return d != _this2.toEasterStar(dir);
@@ -541,7 +547,9 @@
 	      this.game.load.image('ironplateicon', 'assets/sprites/ironplateicon.png');
 	      this.game.load.image('stonebrickicon', 'assets/sprites/stonebrickicon.png');
 	      this.game.load.image('depot', 'assets/sprites/depot.png');
-	      this.game.load.image('road', 'assets/sprites/roadN.png');
+	      this.game.load.image('road1', 'assets/sprites/road1.png');
+	      this.game.load.image('road2', 'assets/sprites/road2.png');
+	      this.game.load.image('road3', 'assets/sprites/road3.png');
 	      this.game.load.image('destination', 'assets/sprites/destination.png');
 	      this.cursors = this.game.input.keyboard.createCursorKeys();
 	    }
@@ -620,11 +628,11 @@
 	    }
 	  }, {
 	    key: 'createRoad',
-	    value: function createRoad(x, y, dir) {
+	    value: function createRoad(x, y, dir, speed, sprite) {
 	      console.log("create Road");
 	      var wp = this.cellToWorld(x, y);
 
-	      var s = this.game.add.sprite(wp.x + _constants.CELL_SIZE / 2, wp.y + _constants.CELL_SIZE / 2, 'road');
+	      var s = this.game.add.sprite(wp.x + _constants.CELL_SIZE / 2, wp.y + _constants.CELL_SIZE / 2, sprite);
 	      s.anchor.setTo(0.5, 0.5);
 
 	      switch (dir) {
@@ -641,7 +649,7 @@
 	          s.angle = 0;
 	      }
 
-	      this.grid.addRoad(x, y, dir);
+	      this.grid.addRoad(x, y, dir, speed);
 	    }
 	  }, {
 	    key: 'hasCarAt',
@@ -957,6 +965,11 @@
 	        if (!this.moving) {
 
 	          //console.log("Creating tween => ", this.sprite.x, this.sprite.y, " To ", transitionToWorld)
+	          var gc = this.gridCoord();
+	          var spd = this.stage.grid.getRoadSpeed(gc.x, gc.y);
+
+	          if (spd != null) this.speed = spd;
+
 	          var mvt = this.game.add.tween(this.sprite).to(transitionToWorld, 1000 / this.speed, Phaser.Easing.Linear.None, true);
 	          mvt.onComplete.addOnce(function () {
 	            this.moving = false;
@@ -964,22 +977,6 @@
 	          }, this);
 	          mvt.start();
 	          this.moving = true;
-
-	          /*
-	          this.sprite.x += ((
-	            (transitionToWorld.x - this.sprite.x) > 0 ? 1 : -1)
-	              * this.speed.x)
-	           this.sprite.y += ((
-	            (transitionToWorld.y - this.sprite.y) > 0 ? 1 : -1)
-	              * this.speed.y)
-	          */
-
-	          /*
-	          if(Math.round(this.sprite.x) == Math.round(transitionToWorld.x) &&
-	             Math.round(this.sprite.y) == Math.round(transitionToWorld.y)) {
-	            this.transitionTo = null
-	          }
-	          */
 	        } else {
 	          this.iconSprite.x = this.sprite.x;
 	          this.iconSprite.y = this.sprite.y;
@@ -1279,8 +1276,7 @@
 	  }, {
 	    key: 'getInfo',
 	    value: function getInfo() {
-	      return;
-	      "Furnace. Coal " + this.coalStorage + " | Iron " + this.ironStorage + " | Stone " + this.stoneStorage + " | Out Iron " + this.ironPlateStorage + " | OutStone " + this.stoneBrickStorage + " | MatterInTransit " + this.matterInTransit;
+	      return "Furnace. Coal " + this.coalStorage + " | Iron " + this.ironStorage + " | Stone " + this.stoneStorag + " | Out Iron " + this.ironPlateStorage + " | OutStone " + this.stoneBrickStorage + " | MatterInTransit " + this.matterInTransit;
 	    }
 	  }]);
 
@@ -1423,14 +1419,16 @@
 	    this.stage = stage;
 
 	    var keys = [{ key: Phaser.Keyboard.ESC, action: this.unselect }, { key: Phaser.Keyboard.ONE, action: function action() {
-	        return _this.select('road');
+	        return _this.select('road1');
 	      } }, { key: Phaser.Keyboard.TWO, action: function action() {
-	        return _this.select('car');
+	        return _this.select('road2');
 	      } }, { key: Phaser.Keyboard.THREE, action: function action() {
-	        return _this.select('mine');
+	        return _this.select('road3');
 	      } }, { key: Phaser.Keyboard.FOUR, action: function action() {
-	        return _this.select('depot');
+	        return _this.select('mine');
 	      } }, { key: Phaser.Keyboard.FIVE, action: function action() {
+	        return _this.select('depot');
+	      } }, { key: Phaser.Keyboard.SIX, action: function action() {
 	        return _this.select('furnace');
 	      } }, { key: Phaser.Keyboard.R, action: this.rotateSelection }].map(function (k) {
 	      var key = _this.game.input.keyboard.addKey(k.key);
@@ -1441,7 +1439,7 @@
 
 	    this.hoverSprites = {};
 
-	    var genSpritesHover = ['road', 'car', 'mine', 'furnace', 'depot'].map(function (s) {
+	    var genSpritesHover = ['road1', 'road2', 'road3', 'car', 'mine', 'furnace', 'depot'].map(function (s) {
 	      var hoverSprite = this.game.add.sprite(0, 0, s);
 	      hoverSprite.alpha = 0.5;
 	      hoverSprite.visible = false;
@@ -1482,11 +1480,16 @@
 	      }
 	    }
 	  }, {
+	    key: 'getHoverSprite',
+	    value: function getHoverSprite(s) {
+	      return this.hoverSprites[s];
+	    }
+	  }, {
 	    key: 'select',
 	    value: function select(s) {
 	      if (this.selected != null) this.selected.sprite.visible = false;
 	      this.selected = {
-	        sprite: this.hoverSprites[s],
+	        sprite: this.getHoverSprite(s),
 	        type: s,
 	        direction: _constants.Direction.N
 	      };
@@ -1512,9 +1515,20 @@
 	        console.log("Mouse down on grid " + p.x + "," + p.y);
 
 	        switch (this.selected.type) {
-	          case 'road':
+	          case 'road1':
+	          case 'road2':
+	          case 'road3':
 	            this.stage.removeConstruction(p.x, p.y);
-	            this.stage.createRoad(p.x, p.y, this.selected.direction);
+	            var spd = 1;
+	            switch (this.selected.type) {
+	              case 'road1':
+	                spd = 1;break;
+	              case 'road2':
+	                spd = 2;break;
+	              case 'road3':
+	                spd = 6;break;
+	            }
+	            this.stage.createRoad(p.x, p.y, this.selected.direction, spd, this.selected.type);
 	            break;
 	          case 'car':
 	            this.stage.createCar(wp.x, wp.y);

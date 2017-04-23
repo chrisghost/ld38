@@ -88,6 +88,11 @@ class Car {
       if(!this.moving) {
 
         //console.log("Creating tween => ", this.sprite.x, this.sprite.y, " To ", transitionToWorld)
+        var gc = this.gridCoord()
+        var spd = this.stage.grid.getRoadSpeed(gc.x, gc.y)
+
+        if(spd != null) this.speed = spd
+
         var mvt = this.game.add.tween(this.sprite)
             .to(transitionToWorld, 1000 / this.speed, Phaser.Easing.Linear.None, true)
         mvt.onComplete.addOnce(function() {
@@ -97,22 +102,6 @@ class Car {
         mvt.start()
         this.moving = true
 
-        /*
-        this.sprite.x += ((
-          (transitionToWorld.x - this.sprite.x) > 0 ? 1 : -1)
-            * this.speed.x)
-
-        this.sprite.y += ((
-          (transitionToWorld.y - this.sprite.y) > 0 ? 1 : -1)
-            * this.speed.y)
-        */
-
-        /*
-        if(Math.round(this.sprite.x) == Math.round(transitionToWorld.x) &&
-           Math.round(this.sprite.y) == Math.round(transitionToWorld.y)) {
-          this.transitionTo = null
-        }
-        */
       } else {
         this.iconSprite.x = this.sprite.x
         this.iconSprite.y = this.sprite.y
