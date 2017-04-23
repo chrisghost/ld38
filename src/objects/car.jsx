@@ -142,7 +142,7 @@ class Car {
 
       if(c != null) {
         if(c instanceof Depot) {
-          this.stage.addResource(this.load, this.number)
+          c.addResource(this.load, this.number)
         } else if(c instanceof Furnace) {
           c.add(this.load, this.number)
         }

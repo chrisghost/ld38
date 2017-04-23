@@ -83,14 +83,14 @@ class PlayState extends Phaser.State {
     this.depots = []
     this.furnaces = []
 
+    this.initResources()
+    this.resourcesTimerUpdate = 0
+  }
+
+  initResources() {
     this.resources = {}
     this.resources[Resources.IRON_PLATE] = 0
     this.resources[Resources.STONE_BRICK] = 0
-  }
-
-  addResource(load, n) {
-    this.resources[load] = this.resources[load] + n
-    console.log(load, n, this.resources)
   }
 
   createRoad(x, y, dir, speed, sprite) {
@@ -170,7 +170,7 @@ class PlayState extends Phaser.State {
     this.grid.path(from, to, function(p) {
       if(p == null) console.log("Not path ", from, to, "input was : ", x, y)
       else {
-        console.log("Create car : ", x, y)
+        //console.log("Create car : ", x, y)
         var car = new Car(x, y, 'car', this, load, n)
         car.setPath(p)
         this.cars.push(car)
@@ -241,6 +241,25 @@ class PlayState extends Phaser.State {
 
     this.mines.map(c => c.update())
     this.furnaces.map(c => c.update())
+
+    this.resourcesTimerUpdate += this.game.time.elapsed
+
+    if(this.resourcesTimerUpdate > 1000) {
+      this.resourcesTimerUpdate = 0
+
+      //console.log("BEDFORE UPDATE RESOURCE ", this.resources)
+      this.initResources()
+
+      this.resources = this.depots.reduce(function(acc, d) {
+        //console.log("DEPOT CONTENTS : ", d.contents)
+        acc[Resources.IRON_PLATE] += d.contents[Resources.IRON_PLATE]
+        acc[Resources.STONE_BRICK] += d.contents[Resources.STONE_BRICK]
+
+        return acc
+      }, this.resources)
+
+      //console.log("UPDATED RESOURCE ", this.resources)
+    }
 
   }
 

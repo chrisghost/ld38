@@ -616,15 +616,15 @@
 	      this.depots = [];
 	      this.furnaces = [];
 
+	      this.initResources();
+	      this.resourcesTimerUpdate = 0;
+	    }
+	  }, {
+	    key: 'initResources',
+	    value: function initResources() {
 	      this.resources = {};
 	      this.resources[_constants.Resources.IRON_PLATE] = 0;
 	      this.resources[_constants.Resources.STONE_BRICK] = 0;
-	    }
-	  }, {
-	    key: 'addResource',
-	    value: function addResource(load, n) {
-	      this.resources[load] = this.resources[load] + n;
-	      console.log(load, n, this.resources);
 	    }
 	  }, {
 	    key: 'createRoad',
@@ -737,7 +737,7 @@
 
 	      this.grid.path(from, to, function (p) {
 	        if (p == null) console.log("Not path ", from, to, "input was : ", x, y);else {
-	          console.log("Create car : ", x, y);
+	          //console.log("Create car : ", x, y)
 	          var car = new _car2.default(x, y, 'car', this, load, n);
 	          car.setPath(p);
 	          this.cars.push(car);
@@ -811,6 +811,25 @@
 	      this.furnaces.map(function (c) {
 	        return c.update();
 	      });
+
+	      this.resourcesTimerUpdate += this.game.time.elapsed;
+
+	      if (this.resourcesTimerUpdate > 1000) {
+	        this.resourcesTimerUpdate = 0;
+
+	        //console.log("BEDFORE UPDATE RESOURCE ", this.resources)
+	        this.initResources();
+
+	        this.resources = this.depots.reduce(function (acc, d) {
+	          //console.log("DEPOT CONTENTS : ", d.contents)
+	          acc[_constants.Resources.IRON_PLATE] += d.contents[_constants.Resources.IRON_PLATE];
+	          acc[_constants.Resources.STONE_BRICK] += d.contents[_constants.Resources.STONE_BRICK];
+
+	          return acc;
+	        }, this.resources);
+
+	        //console.log("UPDATED RESOURCE ", this.resources)
+	      }
 	    }
 	  }, {
 	    key: 'render',
@@ -1035,7 +1054,7 @@
 
 	        if (c != null) {
 	          if (c instanceof _depot2.default) {
-	            this.stage.addResource(this.load, this.number);
+	            c.addResource(this.load, this.number);
 	          } else if (c instanceof _furnace2.default) {
 	            c.add(this.load, this.number);
 	          }
@@ -1088,9 +1107,19 @@
 	    this.y = y;
 
 	    this.gridPos = { x: x, y: y };
+
+	    this.contents = {};
+	    this.contents[_constants.Resources.IRON_PLATE] = 0;
+	    this.contents[_constants.Resources.STONE_BRICK] = 0;
 	  }
 
 	  _createClass(Depot, [{
+	    key: 'addResource',
+	    value: function addResource(t, n) {
+	      //console.log("Add resource to depot : ", t, n, this.contents)
+	      this.contents[t] += n;
+	    }
+	  }, {
 	    key: 'getInfo',
 	    value: function getInfo() {
 	      return "Depot";
