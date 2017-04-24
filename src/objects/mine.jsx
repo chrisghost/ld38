@@ -48,7 +48,7 @@ class Mine {
       }
 
       if(d != null) {
-        d.addMatterInTransit(10)
+        if(this.product != CellTypes.KIND_COAL) d.addMatterInTransit(10)
         this.stage.createCar(this.x, this.y, {x: d.gridPos.x, y: d.gridPos.y}, this.product, 10)
       } else {
         console.log(
@@ -58,7 +58,7 @@ class Mine {
     }
   }
   getInfo() {
-    return "Mine of "+this.product
+    return "Mine"
   }
 }
  export default Mine

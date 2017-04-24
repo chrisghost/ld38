@@ -1,5 +1,5 @@
-import {CELL_SIZE, Direction} from '../constants.jsx';
-import {CellTypeMinable} from '../objects/grid.jsx';
+import {Resources, CELL_SIZE, Direction} from '../constants.jsx';
+import {CellTypeMinable, Prices} from '../objects/grid.jsx';
 
 class ToolBelt {
   constructor(stage) {
@@ -35,7 +35,7 @@ class ToolBelt {
       'furnace',
       'depot'
     ].map(function(s) {
-      var hoverSprite = this.stage.spritesGroups.buildings.create(0, 0, s)
+      var hoverSprite = this.stage.spritesGroups.hover.create(0, 0, s)
       hoverSprite.alpha = 0.5
       hoverSprite.visible = false
       hoverSprite.anchor.setTo(0.5, 0.5)
@@ -92,8 +92,20 @@ class ToolBelt {
     }
   }
 
+  canAfford() {
+    console.log(this.selected, Prices)
+    var p = Prices[this.selected.type]
+    if(p == null) return false
+    else {
+      console.log("canAfford ? ", this.selected.type, this.stage.resources)
+      return (this.stage.resources[Resources.IRON_PLATE] >= p.IRON && this.stage.resources[Resources.STONE_BRICK] >= p.STONE)
+    }
+  }
+
   onMouseDown() {
     if(this.selected != null) {
+      if(!this.canAfford(this.selected)) return
+
       var p = this.stage.worldToGrid(this.game.input.x, this.game.input.y)
       var wp = this.stage.cellToWorld(p.x, p.y)
 
@@ -130,6 +142,10 @@ class ToolBelt {
           break;
         default:
       }
+
+    } else {
+
+      this.stage.displayCellInfos()
 
     }
   }

@@ -1,10 +1,11 @@
-import {Grid, CellTypes} from '../objects/grid.jsx';
+import {Grid, CellTypes, Prices} from '../objects/grid.jsx';
 import Car from '../objects/car.jsx';
 import Mine from '../objects/mine.jsx';
 import Furnace from '../objects/furnace.jsx';
 import Depot from '../objects/depot.jsx';
 import Road from '../objects/road.jsx';
 import ToolBelt from '../objects/toolbelt.jsx';
+import Gui from '../objects/gui.jsx';
 import {Resources, CELL_SIZE, Direction, WORLD_CELL_X, WORLD_CELL_Y } from '../constants.jsx';
 
 class PlayState extends Phaser.State {
@@ -29,6 +30,11 @@ class PlayState extends Phaser.State {
     this.game.load.image('road2', 'assets/sprites/road2.png');
     this.game.load.image('road3', 'assets/sprites/road3.png');
     this.game.load.image('destination', 'assets/sprites/destination.png');
+
+    this.game.load.image('guibkg', 'assets/sprites/guibkg.png');
+    this.game.load.image('toggle_on', 'assets/sprites/toggle_on.png');
+    this.game.load.image('toggle_off', 'assets/sprites/toggle_off.png');
+
     this.cursors = this.game.input.keyboard.createCursorKeys();
   }
 
@@ -64,6 +70,16 @@ class PlayState extends Phaser.State {
     this.game.camera.x = 0
     this.game.camera.y = 0
 
+    var cb = this.game.camera.bounds
+    var CAMERA_OFFSET = 300
+    var CAMERA_OFFSET_RIGHT = 700
+
+    this.game.camera.bounds.setTo(
+      cb.x - CAMERA_OFFSET
+    , cb.y - CAMERA_OFFSET
+    , cb.width + CAMERA_OFFSET + CAMERA_OFFSET_RIGHT
+    , cb.height + CAMERA_OFFSET * 2)
+
     this.spritesGroups = {}
 
     this.spritesGroups.map = this.game.add.group()
@@ -71,6 +87,7 @@ class PlayState extends Phaser.State {
     this.spritesGroups.cars = this.game.add.group()
     this.spritesGroups.hover = this.game.add.group()
 
+    this.gui = new Gui(this)
 
     this.cursorVisor = this.spritesGroups.hover.create(0,0,'cursorvisor')
 
@@ -78,7 +95,10 @@ class PlayState extends Phaser.State {
 
     this.toolbelt = new ToolBelt(this)
 
-    this.game.input.onDown.add(this.toolbelt.onMouseDown, this.toolbelt)
+    this.game.input.onDown.add(function() {
+      if(this.game.input.x > this.game.width - 400) console.log("click on gui")
+      else this.toolbelt.onMouseDown()//.bind(this.toolbelt)
+    }, this)
 
     this.cars = []
     this.mines = []
@@ -101,9 +121,39 @@ class PlayState extends Phaser.State {
     this.resources[Resources.STONE_BRICK] = 0
   }
 
+  spend(t) {
+    var p = Prices[t]
+    if(p == null) return false
+    else if(this.resources) {
+      console.log(p, this)
+      var ironToRemove = p.IRON
+      var stoneToRemove = p.STONE
+
+      this.depots.map (function(d) {
+        if(ironToRemove == 0 && stoneToRemove == 0) return
+
+        d.contents[Resources.IRON_PLATE] -= ironToRemove
+        if(d.contents[Resources.IRON_PLATE] < 0) {
+          ironToRemove = Math.abs(d.contents[Resources.IRON_PLATE])
+          d.contents[Resources.IRON_PLATE] = 0
+        }
+        d.contents[Resources.STONE_BRICK] -= stoneToRemove
+        if(d.contents[Resources.STONE_BRICK] < 0) {
+          stoneToRemove = Math.abs(d.contents[Resources.STONE_BRICK])
+          d.contents[Resources.STONE_BRICK] = 0
+        }
+      })
+
+      this.resources[Resources.IRON_PLATE] -= p.IRON
+      this.resources[Resources.STONE_BRICK] -= p.STONE
+    }
+  }
+
   createRoad(x, y, dir, speed, sprite) {
     console.log("create Road")
     var wp = this.cellToWorld(x, y)
+
+    this.spend(sprite)
 
     var s = this.spritesGroups.buildings.create(wp.x + CELL_SIZE / 2, wp.y + CELL_SIZE / 2, sprite)
     s.anchor.setTo(0.5, 0.5)
@@ -156,6 +206,7 @@ class PlayState extends Phaser.State {
   }
 
   createFurnace(x, y) {
+    this.spend('furnace')
     this.furnaces.push(new Furnace(x, y, 'furnace', this))
 
     //var gridCoords = this.worldToGrid(x, y)
@@ -163,6 +214,8 @@ class PlayState extends Phaser.State {
   }
 
   createDepot(x, y) {
+    this.spend('depot')
+
     this.depots.push(new Depot(x, y, 'depot', this))
 
     //var gridCoords = this.worldToGrid(x, y)
@@ -189,6 +242,7 @@ class PlayState extends Phaser.State {
   }
 
   createMine(x, y) {
+    this.spend('mine')
     var mine = new Mine(x, y, 'mine', this)
     this.mines.push(mine)
 
@@ -246,6 +300,7 @@ class PlayState extends Phaser.State {
   update() {
     this.moveCamera()
     //this.game.world.scale.set(this.worldScale)
+
     this.cars = this.cars
         .filter(function(c) { return !c.update(this.cars)}.bind(this))
 
@@ -271,6 +326,27 @@ class PlayState extends Phaser.State {
       //console.log("UPDATED RESOURCE ", this.resources)
     }
 
+    this.gui.update(this.resources)
+
+  }
+
+  getBuildingUnderCursor() {
+    var x = this.game.input.x
+    var y = this.game.input.y
+
+    var cell = this.worldToGrid(x, y)
+
+    return this.getBuilding(cell.x, cell.y)
+  }
+
+  displayCellInfos() {
+    var s = this.getBuildingUnderCursor()
+
+    if(!s) s = this.getCellUnderCursor()
+
+    console.log("displayCellInfos", s)
+
+    this.gui.displayCellInfos(s)
   }
 
   render() {
@@ -284,17 +360,21 @@ class PlayState extends Phaser.State {
       this.cursorVisor.x = cPos.x
       this.cursorVisor.y = cPos.y
 
+      /*
       var b = this.getBuilding(cc.x, cc.y)
       if(b != null) {
         this.game.debug.text( "Building: " + b.getInfo(), 600, 180 );
       }
+      */
 
-      this.game.debug.text( "Cursor hovering : " + cc.x+", "+cc.y + " Kind : "+cc.kind , 100, 380 );
+      //this.game.debug.text( "Cursor hovering : " + cc.x+", "+cc.y + " Kind : "+cc.kind , 100, 380 );
 
+      /*
       this.game.debug.text( "Resources: " +
         " IRON PLATE : " + this.resources[Resources.IRON_PLATE] +
         " | STONE BRICK : " + this.resources[Resources.STONE_BRICK]
         , 100, 20)
+      */
 
       this.toolbelt.render(cPos)
 

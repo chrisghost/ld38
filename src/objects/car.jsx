@@ -43,13 +43,13 @@ class Car {
       icon
     )
 
-    this.destinationSprite = this.stage.spritesGroups.cars.create(
+    /*this.destinationSprite = this.stage.spritesGroups.cars.create(
       this.wp.x,
       this.wp.y,
       'destination'
-    )
+    )*/
 
-    this.destinationSprite.visible = false
+    //this.destinationSprite.visible = false
 
     this.path = []
     this.transitionTo = null
@@ -68,10 +68,10 @@ class Car {
 
   setPath(p) {
     this.path = p
-    this.destinationSprite.visible = true
+    //this.destinationSprite.visible = true
     var dst = this.cellToWorld(p[p.length - 1].x, p[p.length - 1].y)
-    this.destinationSprite.x = dst.x
-    this.destinationSprite.y = dst.y
+    //this.destinationSprite.x = dst.x
+    //this.destinationSprite.y = dst.y
   }
 
   gridCoord() {
@@ -134,7 +134,7 @@ class Car {
       //console.log("transit == ", this.transitionTo)
 
     } else if (this.path.length == 0) {
-      this.destinationSprite.visible = false
+      //this.destinationSprite.visible = false
 
       var gC = this.gridCoord()
       var c = this.stage.getBuilding(gC.x, gC.y)

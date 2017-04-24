@@ -10,7 +10,6 @@ class BootState extends Phaser.State {
     this.game.antialias = false;
     this.game.renderer.renderSession.roundPixels = true;
 
-    console.log(WORLD_W, WORLD_H)
     this.game.world.setBounds(0, 0, WORLD_W, WORLD_H);
 
     this.state.start('play');

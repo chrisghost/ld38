@@ -125,7 +125,6 @@
 	      this.game.antialias = false;
 	      this.game.renderer.renderSession.roundPixels = true;
 
-	      console.log(_constants.WORLD_W, _constants.WORLD_H);
 	      this.game.world.setBounds(0, 0, _constants.WORLD_W, _constants.WORLD_H);
 
 	      this.state.start('play');
@@ -204,12 +203,12 @@
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.CellTypeMinable = exports.CellTypesHuman = exports.CellTypes = exports.Grid = undefined;
+	exports.Prices = exports.CellTypeMinable = exports.CellTypesHuman = exports.CellTypes = exports.Grid = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -225,6 +224,15 @@
 	  KIND_IRON: 4,
 	  KIND_COAL: 5,
 	  KIND_SHIP: 999
+	};
+
+	var Prices = {
+	  'road1': { IRON: 1, STONE: 1 },
+	  'road2': { IRON: 5, STONE: 5 },
+	  'road3': { IRON: 10, STONE: 10 },
+	  'depot': { IRON: 50, STONE: 50 },
+	  'furnace': { IRON: 10, STONE: 10 },
+	  'mine': { IRON: 20, STONE: 10 }
 	};
 
 	var CellTypeMinable = function CellTypeMinable(tpe) {
@@ -263,7 +271,7 @@
 	  }
 
 	  _createClass(Cell, [{
-	    key: "print",
+	    key: 'print',
 	    value: function print() {
 	      console.log("Cell at " + this.x + ", " + this.y);
 	    }
@@ -285,7 +293,7 @@
 	  }
 
 	  _createClass(Grid, [{
-	    key: "init",
+	    key: 'init',
 	    value: function init() {
 	      var waterTiles = 0;
 
@@ -315,7 +323,7 @@
 	      this.star.setAcceptableTiles(this.walkables());
 	    }
 	  }, {
-	    key: "putShip",
+	    key: 'putShip',
 	    value: function putShip() {
 
 	      var shipC = this.getRandCellNoNeighbours(CellTypes.KIND_EARTH, CellTypes.KIND_EARTH);
@@ -327,11 +335,11 @@
 
 	      var d = this.stage.createDepot(storageC.x, storageC.y);
 
-	      d.addResource(_constants.Resources.IRON_PLATE, 100);
-	      d.addResource(_constants.Resources.STONE_BRICK, 100);
+	      d.addResource(_constants.Resources.IRON_PLATE, 200);
+	      d.addResource(_constants.Resources.STONE_BRICK, 200);
 	    }
 	  }, {
-	    key: "neighbours",
+	    key: 'neighbours',
 	    value: function neighbours(x, y) {
 	      var _this = this;
 
@@ -342,34 +350,34 @@
 	      });
 	    }
 	  }, {
-	    key: "putResources",
+	    key: 'putResources',
 	    value: function putResources() {
-	      for (var i = 0; i < 10; i++) {
+	      for (var i = 0; i < 5; i++) {
 	        var c1 = this.getRandCell(CellTypes.KIND_EARTH);
 	        c1.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_STONE));
 	        c1.kind = CellTypes.KIND_STONE;
 	      }
 
-	      for (var i = 0; i < 6; i++) {
+	      for (var i = 0; i < 5; i++) {
 	        var c2 = this.getRandCell(CellTypes.KIND_EARTH);
 	        c2.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_COAL));
 	        c2.kind = CellTypes.KIND_COAL;
 	      }
 
-	      for (var i = 0; i < 20; i++) {
+	      for (var i = 0; i < 7; i++) {
 	        var c3 = this.getRandCell(CellTypes.KIND_EARTH);
 	        c3.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_IRON));
 	        c3.kind = CellTypes.KIND_IRON;
 	      }
 	    }
 	  }, {
-	    key: "getRoadSpeed",
+	    key: 'getRoadSpeed',
 	    value: function getRoadSpeed(x, y) {
 	      var spd = this.getCell(x, y).roadSpeed;
 	      if (spd == null) return 0.5;else return spd;
 	    }
 	  }, {
-	    key: "initGrid",
+	    key: 'initGrid',
 	    value: function initGrid() {
 	      this.star.setGrid(this.g.map(function (c) {
 	        return c.map(function (cell) {
@@ -378,7 +386,7 @@
 	      }));
 	    }
 	  }, {
-	    key: "getRandCellNoNeighbours",
+	    key: 'getRandCellNoNeighbours',
 	    value: function getRandCellNoNeighbours(kind, noNeighboursKind) {
 	      var cell = this.getRandCell(CellTypes.KIND_EARTH);
 
@@ -389,7 +397,7 @@
 	      } else return this.getRandCellNoNeighbours(kind, noNeighboursKind);
 	    }
 	  }, {
-	    key: "getRandCell",
+	    key: 'getRandCell',
 	    value: function getRandCell(kind) {
 	      //kind = kind || CellTypes.KIND_EARTH
 
@@ -398,7 +406,7 @@
 	      if (kind == null || c.kind == kind) return c;else return this.getRandCell(kind);
 	    }
 	  }, {
-	    key: "toEasterStar",
+	    key: 'toEasterStar',
 	    value: function toEasterStar(d) {
 	      switch (d) {
 	        case _constants.Direction.N:
@@ -412,25 +420,62 @@
 	      }
 	    }
 	  }, {
-	    key: "addRoad",
+	    key: 'addRoad',
 	    value: function addRoad(x, y, dir, speed) {
 	      var _this2 = this;
 
-	      this.g[y][x] = { x: x, y: y, dir: dir, kind: CellTypes.KIND_ROAD, roadSpeed: speed };
+	      var entrances = { N: 1, E: 1, S: 1, W: 1 };
+
+	      switch (dir) {
+	        case _constants.Direction.N:
+	          entrances.N = 0;break;
+	        case _constants.Direction.S:
+	          entrances.S = 0;break;
+	        case _constants.Direction.W:
+	          entrances.W = 0;break;
+	        default:
+	          entrances.E = 0;break;
+	      }
+
+	      this.g[y][x] = {
+	        x: x,
+	        y: y,
+	        dir: dir,
+	        kind: CellTypes.KIND_ROAD,
+	        roadSpeed: speed,
+	        entrances: entrances
+	      };
+
 	      this.initGrid();
 	      this.star.setDirectionalCondition(x, y, [EasyStar.BOTTOM, EasyStar.LEFT, EasyStar.TOP, EasyStar.RIGHT].filter(function (d) {
 	        return d != _this2.toEasterStar(dir);
 	      }));
 	    }
 	  }, {
-	    key: "addBuilding",
+	    key: 'refreshRoad',
+	    value: function refreshRoad(x, y) {
+	      var r = this.getCell(x, y);
+
+	      if (r == null) return;
+
+	      var directions = [];
+
+	      if (r.entrances.N) directions.push(EasyStar.TOP);
+	      if (r.entrances.E) directions.push(EasyStar.RIGHT);
+	      if (r.entrances.S) directions.push(EasyStar.BOTTOM);
+	      if (r.entrances.W) directions.push(EasyStar.LEFT);
+
+	      this.star.setDirectionalCondition(x, y, directions);
+	    }
+	  }, {
+	    key: 'addBuilding',
 	    value: function addBuilding(x, y) {
 	      this.g[y][x].kind = CellTypes.KIND_ROAD;
 	      this.star.setAdditionalPointCost(x, y, 99999);
 	      this.initGrid();
 	    }
 	  }, {
-	    key: "removeConstruction",
+	    key: 'removeConstruction',
 	    value: function removeConstruction(x, y) {
 	      this.g[y][x].kind = CellTypes.KIND_EARTH;
 	      this.star.setAdditionalPointCost(x, y, 0);
@@ -438,18 +483,18 @@
 	      this.star.setDirectionalCondition(x, y, [EasyStar.BOTTOM, EasyStar.LEFT, EasyStar.TOP, EasyStar.RIGHT]);
 	    }
 	  }, {
-	    key: "walkables",
+	    key: 'walkables',
 	    value: function walkables() {
 	      return [CellTypes.KIND_ROAD, CellTypes.KIND_DEPOT];
 	    }
 	  }, {
-	    key: "path",
+	    key: 'path',
 	    value: function path(from, to, callback) {
 	      this.star.findPath(from.x, from.y, to.x, to.y, callback);
 	      this.star.calculate();
 	    }
 	  }, {
-	    key: "getCell",
+	    key: 'getCell',
 	    value: function getCell(x, y) {
 	      //console.log(this.g.length, this.g[0].length)
 	      try {
@@ -459,7 +504,7 @@
 	      }
 	    }
 	  }, {
-	    key: "forEach",
+	    key: 'forEach',
 	    value: function forEach(f) {
 	      this.g.forEach(function (col) {
 	        col.forEach(f);
@@ -467,7 +512,7 @@
 	      });
 	    }
 	  }, {
-	    key: "printGrid",
+	    key: 'printGrid',
 	    value: function printGrid() {
 	      this.g.forEach(function (col) {
 	        var l = "";
@@ -487,6 +532,7 @@
 	exports.CellTypes = CellTypes;
 	exports.CellTypesHuman = CellTypesHuman;
 	exports.CellTypeMinable = CellTypeMinable;
+	exports.Prices = Prices;
 
 /***/ }),
 /* 4 */
@@ -525,6 +571,10 @@
 	var _toolbelt = __webpack_require__(10);
 
 	var _toolbelt2 = _interopRequireDefault(_toolbelt);
+
+	var _gui = __webpack_require__(11);
+
+	var _gui2 = _interopRequireDefault(_gui);
 
 	var _constants = __webpack_require__(2);
 
@@ -568,6 +618,11 @@
 	      this.game.load.image('road2', 'assets/sprites/road2.png');
 	      this.game.load.image('road3', 'assets/sprites/road3.png');
 	      this.game.load.image('destination', 'assets/sprites/destination.png');
+
+	      this.game.load.image('guibkg', 'assets/sprites/guibkg.png');
+	      this.game.load.image('toggle_on', 'assets/sprites/toggle_on.png');
+	      this.game.load.image('toggle_off', 'assets/sprites/toggle_off.png');
+
 	      this.cursors = this.game.input.keyboard.createCursorKeys();
 	    }
 	  }, {
@@ -614,6 +669,12 @@
 	      this.game.camera.x = 0;
 	      this.game.camera.y = 0;
 
+	      var cb = this.game.camera.bounds;
+	      var CAMERA_OFFSET = 300;
+	      var CAMERA_OFFSET_RIGHT = 700;
+
+	      this.game.camera.bounds.setTo(cb.x - CAMERA_OFFSET, cb.y - CAMERA_OFFSET, cb.width + CAMERA_OFFSET + CAMERA_OFFSET_RIGHT, cb.height + CAMERA_OFFSET * 2);
+
 	      this.spritesGroups = {};
 
 	      this.spritesGroups.map = this.game.add.group();
@@ -621,13 +682,17 @@
 	      this.spritesGroups.cars = this.game.add.group();
 	      this.spritesGroups.hover = this.game.add.group();
 
+	      this.gui = new _gui2.default(this);
+
 	      this.cursorVisor = this.spritesGroups.hover.create(0, 0, 'cursorvisor');
 
 	      this.game.input.mouse.capture = true;
 
 	      this.toolbelt = new _toolbelt2.default(this);
 
-	      this.game.input.onDown.add(this.toolbelt.onMouseDown, this.toolbelt);
+	      this.game.input.onDown.add(function () {
+	        if (this.game.input.x > this.game.width - 400) console.log("click on gui");else this.toolbelt.onMouseDown(); //.bind(this.toolbelt)
+	      }, this);
 
 	      this.cars = [];
 	      this.mines = [];
@@ -651,10 +716,40 @@
 	      this.resources[_constants.Resources.STONE_BRICK] = 0;
 	    }
 	  }, {
+	    key: 'spend',
+	    value: function spend(t) {
+	      var p = _grid.Prices[t];
+	      if (p == null) return false;else if (this.resources) {
+	        console.log(p, this);
+	        var ironToRemove = p.IRON;
+	        var stoneToRemove = p.STONE;
+
+	        this.depots.map(function (d) {
+	          if (ironToRemove == 0 && stoneToRemove == 0) return;
+
+	          d.contents[_constants.Resources.IRON_PLATE] -= ironToRemove;
+	          if (d.contents[_constants.Resources.IRON_PLATE] < 0) {
+	            ironToRemove = Math.abs(d.contents[_constants.Resources.IRON_PLATE]);
+	            d.contents[_constants.Resources.IRON_PLATE] = 0;
+	          }
+	          d.contents[_constants.Resources.STONE_BRICK] -= stoneToRemove;
+	          if (d.contents[_constants.Resources.STONE_BRICK] < 0) {
+	            stoneToRemove = Math.abs(d.contents[_constants.Resources.STONE_BRICK]);
+	            d.contents[_constants.Resources.STONE_BRICK] = 0;
+	          }
+	        });
+
+	        this.resources[_constants.Resources.IRON_PLATE] -= p.IRON;
+	        this.resources[_constants.Resources.STONE_BRICK] -= p.STONE;
+	      }
+	    }
+	  }, {
 	    key: 'createRoad',
 	    value: function createRoad(x, y, dir, speed, sprite) {
 	      console.log("create Road");
 	      var wp = this.cellToWorld(x, y);
+
+	      this.spend(sprite);
 
 	      var s = this.spritesGroups.buildings.create(wp.x + _constants.CELL_SIZE / 2, wp.y + _constants.CELL_SIZE / 2, sprite);
 	      s.anchor.setTo(0.5, 0.5);
@@ -738,6 +833,7 @@
 	  }, {
 	    key: 'createFurnace',
 	    value: function createFurnace(x, y) {
+	      this.spend('furnace');
 	      this.furnaces.push(new _furnace2.default(x, y, 'furnace', this));
 
 	      //var gridCoords = this.worldToGrid(x, y)
@@ -746,6 +842,8 @@
 	  }, {
 	    key: 'createDepot',
 	    value: function createDepot(x, y) {
+	      this.spend('depot');
+
 	      this.depots.push(new _depot2.default(x, y, 'depot', this));
 
 	      //var gridCoords = this.worldToGrid(x, y)
@@ -773,6 +871,7 @@
 	  }, {
 	    key: 'createMine',
 	    value: function createMine(x, y) {
+	      this.spend('mine');
 	      var mine = new _mine2.default(x, y, 'mine', this);
 	      this.mines.push(mine);
 
@@ -827,6 +926,7 @@
 	    value: function update() {
 	      this.moveCamera();
 	      //this.game.world.scale.set(this.worldScale)
+
 	      this.cars = this.cars.filter(function (c) {
 	        return !c.update(this.cars);
 	      }.bind(this));
@@ -856,6 +956,29 @@
 
 	        //console.log("UPDATED RESOURCE ", this.resources)
 	      }
+
+	      this.gui.update(this.resources);
+	    }
+	  }, {
+	    key: 'getBuildingUnderCursor',
+	    value: function getBuildingUnderCursor() {
+	      var x = this.game.input.x;
+	      var y = this.game.input.y;
+
+	      var cell = this.worldToGrid(x, y);
+
+	      return this.getBuilding(cell.x, cell.y);
+	    }
+	  }, {
+	    key: 'displayCellInfos',
+	    value: function displayCellInfos() {
+	      var s = this.getBuildingUnderCursor();
+
+	      if (!s) s = this.getCellUnderCursor();
+
+	      console.log("displayCellInfos", s);
+
+	      this.gui.displayCellInfos(s);
 	    }
 	  }, {
 	    key: 'render',
@@ -870,14 +993,21 @@
 	        this.cursorVisor.x = cPos.x;
 	        this.cursorVisor.y = cPos.y;
 
-	        var b = this.getBuilding(cc.x, cc.y);
-	        if (b != null) {
-	          this.game.debug.text("Building: " + b.getInfo(), 600, 180);
+	        /*
+	        var b = this.getBuilding(cc.x, cc.y)
+	        if(b != null) {
+	          this.game.debug.text( "Building: " + b.getInfo(), 600, 180 );
 	        }
+	        */
 
-	        this.game.debug.text("Cursor hovering : " + cc.x + ", " + cc.y + " Kind : " + cc.kind, 100, 380);
+	        //this.game.debug.text( "Cursor hovering : " + cc.x+", "+cc.y + " Kind : "+cc.kind , 100, 380 );
 
-	        this.game.debug.text("Resources: " + " IRON PLATE : " + this.resources[_constants.Resources.IRON_PLATE] + " | STONE BRICK : " + this.resources[_constants.Resources.STONE_BRICK], 100, 20);
+	        /*
+	        this.game.debug.text( "Resources: " +
+	          " IRON PLATE : " + this.resources[Resources.IRON_PLATE] +
+	          " | STONE BRICK : " + this.resources[Resources.STONE_BRICK]
+	          , 100, 20)
+	        */
 
 	        this.toolbelt.render(cPos);
 	      }
@@ -964,9 +1094,13 @@
 
 	    this.iconSprite = this.stage.spritesGroups.cars.create(this.wp.x, this.wp.y, icon);
 
-	    this.destinationSprite = this.stage.spritesGroups.cars.create(this.wp.x, this.wp.y, 'destination');
+	    /*this.destinationSprite = this.stage.spritesGroups.cars.create(
+	      this.wp.x,
+	      this.wp.y,
+	      'destination'
+	    )*/
 
-	    this.destinationSprite.visible = false;
+	    //this.destinationSprite.visible = false
 
 	    this.path = [];
 	    this.transitionTo = null;
@@ -988,10 +1122,10 @@
 	    key: 'setPath',
 	    value: function setPath(p) {
 	      this.path = p;
-	      this.destinationSprite.visible = true;
+	      //this.destinationSprite.visible = true
 	      var dst = this.cellToWorld(p[p.length - 1].x, p[p.length - 1].y);
-	      this.destinationSprite.x = dst.x;
-	      this.destinationSprite.y = dst.y;
+	      //this.destinationSprite.x = dst.x
+	      //this.destinationSprite.y = dst.y
 	    }
 	  }, {
 	    key: 'gridCoord',
@@ -1072,7 +1206,7 @@
 
 	        //console.log("transit == ", this.transitionTo)
 	      } else if (this.path.length == 0) {
-	        this.destinationSprite.visible = false;
+	        //this.destinationSprite.visible = false
 
 	        var gC = this.gridCoord();
 	        var c = this.stage.getBuilding(gC.x, gC.y);
@@ -1149,7 +1283,7 @@
 	  }, {
 	    key: 'getInfo',
 	    value: function getInfo() {
-	      return "Depot";
+	      return "Depot\n IRON : " + this.contents[_constants.Resources.IRON_PLATE] + " | STONE : " + this.contents[_constants.Resources.STONE_BRICK];
 	    }
 	  }]);
 
@@ -1246,7 +1380,6 @@
 	      switch (kind) {
 	        case _grid.CellTypes.KIND_COAL:
 	          this.coalStorage += n;
-	          this.matterInTransit -= n;
 	          break;
 	        case _grid.CellTypes.KIND_IRON:
 	          this.ironStorage += n;
@@ -1254,6 +1387,7 @@
 	          break;
 	        case _grid.CellTypes.KIND_STONE:
 	          this.stoneStorage += n;
+	          this.matterInTransit -= n;
 	          break;
 	      }
 	    }
@@ -1332,7 +1466,7 @@
 	  }, {
 	    key: 'getInfo',
 	    value: function getInfo() {
-	      return "Furnace. Coal " + this.coalStorage + " | Iron " + this.ironStorage + " | Stone " + this.stoneStorag + " | Out Iron " + this.ironPlateStorage + " | OutStone " + this.stoneBrickStorage + " | MatterInTransit " + this.matterInTransit;
+	      return "Furnace\nCoal " + this.coalStorage + "\nIron " + this.ironStorage + "\nStone " + this.stoneStorage + "\nOut Iron " + this.ironPlateStorage + "\nOutStone " + this.stoneBrickStorage + "\nMatterInTransit " + this.matterInTransit;
 	    }
 	  }]);
 
@@ -1406,7 +1540,7 @@
 	        }
 
 	        if (d != null) {
-	          d.addMatterInTransit(10);
+	          if (this.product != _grid.CellTypes.KIND_COAL) d.addMatterInTransit(10);
 	          this.stage.createCar(this.x, this.y, { x: d.gridPos.x, y: d.gridPos.y }, this.product, 10);
 	        } else {
 	          console.log("no route for mine producing " + (0, _grid.CellTypesHuman)(this.product) + ", mine located at : " + this.x + "," + this.y);
@@ -1416,7 +1550,7 @@
 	  }, {
 	    key: 'getInfo',
 	    value: function getInfo() {
-	      return "Mine of " + this.product;
+	      return "Mine";
 	    }
 	  }]);
 
@@ -1496,7 +1630,7 @@
 	    this.hoverSprites = {};
 
 	    var genSpritesHover = ['road1', 'road2', 'road3', 'car', 'mine', 'furnace', 'depot'].map(function (s) {
-	      var hoverSprite = this.stage.spritesGroups.buildings.create(0, 0, s);
+	      var hoverSprite = this.stage.spritesGroups.hover.create(0, 0, s);
 	      hoverSprite.alpha = 0.5;
 	      hoverSprite.visible = false;
 	      hoverSprite.anchor.setTo(0.5, 0.5);
@@ -1562,9 +1696,21 @@
 	      }
 	    }
 	  }, {
+	    key: 'canAfford',
+	    value: function canAfford() {
+	      console.log(this.selected, _grid.Prices);
+	      var p = _grid.Prices[this.selected.type];
+	      if (p == null) return false;else {
+	        console.log("canAfford ? ", this.selected.type, this.stage.resources);
+	        return this.stage.resources[_constants.Resources.IRON_PLATE] >= p.IRON && this.stage.resources[_constants.Resources.STONE_BRICK] >= p.STONE;
+	      }
+	    }
+	  }, {
 	    key: 'onMouseDown',
 	    value: function onMouseDown() {
 	      if (this.selected != null) {
+	        if (!this.canAfford(this.selected)) return;
+
 	        var p = this.stage.worldToGrid(this.game.input.x, this.game.input.y);
 	        var wp = this.stage.cellToWorld(p.x, p.y);
 
@@ -1603,6 +1749,9 @@
 	            break;
 	          default:
 	        }
+	      } else {
+
+	        this.stage.displayCellInfos();
 	      }
 	    }
 	  }]);
@@ -1611,6 +1760,152 @@
 	}();
 
 	exports.default = ToolBelt;
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _grid = __webpack_require__(3);
+
+	var _constants = __webpack_require__(2);
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var Gui = function () {
+	  function Gui(stage) {
+	    _classCallCheck(this, Gui);
+
+	    this.game = stage.game;
+	    this.stage = stage;
+
+	    this.group = this.game.add.group();
+
+	    var bkg = this.group.create(this.game.width - 400, 0, 'guibkg');
+	    bkg.fixedToCamera = true;
+
+	    this.resourcesText = this.game.add.text(this.game.width - 350, 20, "", { font: "18px Arial", fill: "#ffffff", align: "center" });
+	    this.resourcesText.fixedToCamera = true;
+
+	    this.title = this.game.add.text(this.game.width - 300, 70, "", { font: "24px Arial", fill: "#ffffff", align: "center" });
+	    this.title.fixedToCamera = true;
+
+	    //this.details = this.game.add.text(this.game.width - 300, 120, "Details", { font: "24px Arial", fill: "#f26c4f", align: "center" })
+
+	    this.currentlyShowing = null;
+
+	    this.toggleN = this.group.create(this.game.width - 250, 150, 'toggle_on');
+	    this.toggleE = this.group.create(this.game.width - 150, 250, 'toggle_on');
+	    this.toggleS = this.group.create(this.game.width - 250, 350, 'toggle_on');
+	    this.toggleW = this.group.create(this.game.width - 350, 250, 'toggle_on');
+
+	    this.toggleN.fixedToCamera = true;
+	    this.toggleE.fixedToCamera = true;
+	    this.toggleS.fixedToCamera = true;
+	    this.toggleW.fixedToCamera = true;
+
+	    this.toggleN.inputEnabled = true;
+	    this.toggleE.inputEnabled = true;
+	    this.toggleS.inputEnabled = true;
+	    this.toggleW.inputEnabled = true;
+
+	    this.toggleN.events.onInputDown.add(this.toggleEntrance(_constants.Direction.N), this);
+	    this.toggleE.events.onInputDown.add(this.toggleEntrance(_constants.Direction.E), this);
+	    this.toggleS.events.onInputDown.add(this.toggleEntrance(_constants.Direction.S), this);
+	    this.toggleW.events.onInputDown.add(this.toggleEntrance(_constants.Direction.W), this);
+
+	    this.hideTogglers();
+	  }
+
+	  _createClass(Gui, [{
+	    key: 'toggleEntrance',
+	    value: function toggleEntrance(d) {
+	      return function () {
+	        console.log("Toggle entrance !" + d + ", ", this.currentlyShowing);
+	        switch (d) {
+	          case _constants.Direction.N:
+	            this.currentlyShowing.entrances.N = (this.currentlyShowing.entrances.N + 1) % 2;
+	            break;
+	          case _constants.Direction.S:
+	            this.currentlyShowing.entrances.S = (this.currentlyShowing.entrances.S + 1) % 2;
+	            break;
+	          case _constants.Direction.W:
+	            this.currentlyShowing.entrances.W = (this.currentlyShowing.entrances.W + 1) % 2;
+	            break;
+	          case _constants.Direction.E:
+	            this.currentlyShowing.entrances.E = (this.currentlyShowing.entrances.E + 1) % 2;
+	            break;
+	        }
+
+	        this.stage.grid.refreshRoad(this.currentlyShowing.x, this.currentlyShowing.y);
+	      };
+	    }
+	  }, {
+	    key: 'hideTogglers',
+	    value: function hideTogglers() {
+	      this.toggleN.visible = false;
+	      this.toggleE.visible = false;
+	      this.toggleS.visible = false;
+	      this.toggleW.visible = false;
+	    }
+	  }, {
+	    key: 'displayTogglers',
+	    value: function displayTogglers(entrances) {
+	      //console.log("ENTRANCES", entrances)
+	      this.toggleN.visible = true;
+	      this.toggleE.visible = true;
+	      this.toggleS.visible = true;
+	      this.toggleW.visible = true;
+
+	      if (entrances.N) this.toggleN.loadTexture('toggle_on');else this.toggleN.loadTexture('toggle_off');
+
+	      if (entrances.E) this.toggleE.loadTexture('toggle_on');else this.toggleE.loadTexture('toggle_off');
+
+	      if (entrances.S) this.toggleS.loadTexture('toggle_on');else this.toggleS.loadTexture('toggle_off');
+
+	      if (entrances.W) this.toggleW.loadTexture('toggle_on');else this.toggleW.loadTexture('toggle_off');
+	    }
+	  }, {
+	    key: 'displayCellInfos',
+	    value: function displayCellInfos(it) {
+	      if (it == null) return;
+
+	      this.currentlyShowing = it;
+	      //console.log("currentlyShowing", it)
+
+	      try {
+	        this.title.text = this.currentlyShowing.getInfo();
+
+	        this.hideTogglers();
+	      } catch (e) {
+	        if (it.kind == _grid.CellTypes.KIND_ROAD) {
+	          this.title.text = "Road";
+	          this.displayTogglers(it.entrances);
+	        }
+	      }
+
+	      //console.log("displayItem", it)
+	    }
+	  }, {
+	    key: 'update',
+	    value: function update(resources) {
+	      this.displayCellInfos(this.currentlyShowing);
+
+	      this.resourcesText.text = "IRON PLATE : " + resources[_constants.Resources.IRON_PLATE] + " | STONE BRICK : " + resources[_constants.Resources.STONE_BRICK];
+	    }
+	  }]);
+
+	  return Gui;
+	}();
+
+	exports.default = Gui;
 
 /***/ })
 /******/ ]);

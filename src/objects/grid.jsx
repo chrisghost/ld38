@@ -10,6 +10,15 @@ const CellTypes = {
 , KIND_SHIP : 999
 }
 
+const Prices = {
+  'road1' :   { IRON: 1,  STONE: 1}
+, 'road2' :   { IRON: 5,  STONE: 5}
+, 'road3' :   { IRON: 10, STONE: 10}
+, 'depot' :   { IRON: 50, STONE: 50}
+, 'furnace' : { IRON: 10, STONE: 10}
+, 'mine' :    { IRON: 20, STONE: 10}
+}
+
 const CellTypeMinable = function(tpe) {
   return ( tpe == CellTypes.KIND_STONE ||
            tpe == CellTypes.KIND_IRON ||
@@ -100,8 +109,8 @@ class Grid {
 
     var d = this.stage.createDepot(storageC.x, storageC.y)
 
-    d.addResource(Resources.IRON_PLATE, 100)
-    d.addResource(Resources.STONE_BRICK, 100)
+    d.addResource(Resources.IRON_PLATE, 200)
+    d.addResource(Resources.STONE_BRICK, 200)
   }
 
   neighbours(x, y) {
@@ -114,19 +123,19 @@ class Grid {
   }
 
   putResources() {
-    for(var i = 0; i < 10; i++) {
+    for(var i = 0; i < 5; i++) {
       var c1 = this.getRandCell(CellTypes.KIND_EARTH)
       c1.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_STONE))
       c1.kind = CellTypes.KIND_STONE
     }
 
-    for(var i = 0; i < 6; i++) {
+    for(var i = 0; i < 5; i++) {
       var c2 = this.getRandCell(CellTypes.KIND_EARTH)
       c2.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_COAL))
       c2.kind = CellTypes.KIND_COAL
     }
 
-    for(var i = 0; i < 20; i++) {
+    for(var i = 0; i < 7; i++) {
       var c3 = this.getRandCell(CellTypes.KIND_EARTH)
       c3.sprite.loadTexture(this.stage.cellSpriteName(CellTypes.KIND_IRON))
       c3.kind = CellTypes.KIND_IRON
@@ -177,12 +186,44 @@ class Grid {
   }
 
   addRoad(x, y, dir, speed) {
-    this.g[y][x] = {x:x, y:y, dir: dir, kind: CellTypes.KIND_ROAD, roadSpeed: speed}
+    var entrances = { N: 1, E: 1, S: 1, W: 1 }
+
+    switch(dir) {
+      case Direction.N : entrances.N = 0; break
+      case Direction.S : entrances.S = 0; break
+      case Direction.W : entrances.W = 0; break
+      default: entrances.E = 0; break
+    }
+
+    this.g[y][x] = {
+      x:x,
+      y:y,
+      dir: dir,
+      kind: CellTypes.KIND_ROAD,
+      roadSpeed: speed,
+      entrances: entrances
+    }
+
     this.initGrid()
     this.star.setDirectionalCondition(x, y,
       [EasyStar.BOTTOM, EasyStar.LEFT, EasyStar.TOP, EasyStar.RIGHT]
         .filter(d => d != this.toEasterStar(dir))
     )
+  }
+
+  refreshRoad(x, y) {
+    var r = this.getCell(x, y)
+
+    if(r == null) return
+
+    var directions = []
+
+    if(r.entrances.N) directions.push(EasyStar.TOP)
+    if(r.entrances.E) directions.push(EasyStar.RIGHT)
+    if(r.entrances.S) directions.push(EasyStar.BOTTOM)
+    if(r.entrances.W) directions.push(EasyStar.LEFT)
+
+    this.star.setDirectionalCondition(x, y, directions)
   }
 
   addBuilding(x, y) {
@@ -232,4 +273,4 @@ class Grid {
   }
 }
 
-export {Grid, CellTypes, CellTypesHuman, CellTypeMinable};
+export {Grid, CellTypes, CellTypesHuman, CellTypeMinable, Prices};

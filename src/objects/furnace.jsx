@@ -51,7 +51,6 @@ class Furnace {
     switch (kind) {
       case CellTypes.KIND_COAL :
         this.coalStorage+=n
-        this.matterInTransit-=n
         break
       case CellTypes.KIND_IRON :
         this.ironStorage+=n
@@ -59,6 +58,7 @@ class Furnace {
         break
       case CellTypes.KIND_STONE :
         this.stoneStorage+=n
+        this.matterInTransit-=n
         break
     }
   }
@@ -135,12 +135,12 @@ class Furnace {
     return Resources.IRON_PLATE
   }
   getInfo() {
-    return "Furnace. Coal "+this.coalStorage
-     + " | Iron "+this.ironStorage
-     + " | Stone " + this.stoneStorag
-     + " | Out Iron "+this.ironPlateStorage
-     + " | OutStone " + this.stoneBrickStorage
-     + " | MatterInTransit " + this.matterInTransit
+    return "Furnace\nCoal "+this.coalStorage
+     + "\nIron "+this.ironStorage
+     + "\nStone " + this.stoneStorage
+     + "\nOut Iron "+this.ironPlateStorage
+     + "\nOutStone " + this.stoneBrickStorage
+     + "\nMatterInTransit " + this.matterInTransit
   }
 }
  export default Furnace

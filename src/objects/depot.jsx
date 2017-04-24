@@ -30,7 +30,8 @@ class Depot {
   }
 
   getInfo() {
-    return "Depot"
+    return "Depot\n IRON : "+ this.contents[Resources.IRON_PLATE] +
+      " | STONE : " + this.contents[Resources.STONE_BRICK]
   }
 }
  export default Depot
